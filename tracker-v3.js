@@ -66,6 +66,8 @@
  }
  function renderPersonal(){
  for(const player of players){
+  $('personal-'+player.toLowerCase()).hidden=player!==profile;
+  if(player!==profile)continue;
   const list=personalLoot(player);
   $('personalLoot'+player).innerHTML=list.length?list.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.total}</td><td>${[...x.quests].map(([name,n])=>esc(name)+' ('+n+')').join(' · ')}</td></tr>`).join(''):'<tr><td colspan="3" class="muted">No remaining items for '+player+'’s unfinished quests.</td></tr>';
  }
