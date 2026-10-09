@@ -10,6 +10,10 @@
  if(!Array.isArray(remote))remote=[];if(!Array.isArray(pending))pending=[];
  let profile=players.includes(localStorage.getItem(store.profile))?localStorage.getItem(store.profile):'Nolan';
  let filter=localStorage.getItem(store.filter)||'active',sortMode=localStorage.getItem(store.sortPrefix+profile)||'pinned',search='',selected=null,edit=null,noteEditing=false,noteDraft='',model={Nolan:[],Tyler:[],Kalob:[],Dakota:[]};
+ const sellStore={extras:'unturnov-sell-extra-items-v1',pending:'unturnov-sell-pending-v1',mode:'unturnov-sell-mode-v1'};
+ let sellExtra=read(sellStore.extras,[]),sellPending=read(sellStore.pending,[]),sellMode=localStorage.getItem(sellStore.mode)||'sell',sellSearch='';
+ if(!Array.isArray(sellExtra))sellExtra=[];
+ if(!Array.isArray(sellPending))sellPending=[];
  let activeSync=false,lastSync=Number(localStorage.getItem('unturnov-v3-last-sync')||0)||null,serverError='',authEmail=session?.email||'',undoStack=[],editCounter=0;
  let eventIds=new Set(remote.map(e=>e.event_id)), maxSeq=Math.max(0,...remote.map(e=>Number(e.seq)||0));
  function persist(){try{localStorage.setItem(store.events,JSON.stringify(remote));localStorage.setItem(store.pending,JSON.stringify(pending))}catch(e){serverError='Browser storage is full. Download a backup immediately.'}}
@@ -119,7 +123,111 @@
    }
   }
  }
- function render(){rebuild();renderTabs();autoSelect();renderList();renderDetail();renderPersonal();renderTeam();renderStatus();}
+
+ function sellKey(name){
+  const n=String(name||'').trim().toLowerCase().replace(/\s+/g,' ');
+  const alias={
+   'dogtag':'dogtags','dogtags':'dogtags','bundle of dogtags':'dogtags','stack of dogtags':'dogtags',
+   'water filters':'water filter','damaged power supply units':'damaged power supply unit',
+   'propane':'propa','intellegence folder':'intelligence folder',
+   'fp100 air filter':'fp-100 air filter','air filter':'fp-100 air filter',
+   'stack of wires (5x)':'wires'
+  };
+  return alias[n]||n;
+ }
+ function sellNeeds(){
+  const needs=new Map();
+  const add=(name,count,reason)=>{
+   const key=sellKey(name);if(!key||count<=0)return;
+   const item=needs.get(key)||{total:0,reasons:new Set()};
+   item.total+=count;item.reasons.add(reason);needs.set(key,item);
+  };
+  for(const player of players)for(const q of model[player]||[]){
+   if(q.deleted||complete(q))continue;
+   for(const g of q.goals){
+    if(g.type==='action')continue;
+    let missing=Math.max(0,(Number(g.total)||0)-(Number(g.count)||0));
+    if(/^bundle of dogtags$/i.test(g.name))missing*=10;
+    if(/^stack of dogtags$/i.test(g.name))missing*=100;
+    add(g.name,missing,player+' · '+q.title);
+   }
+  }
+  // Until the crafting tracker initializes, conservatively protect every recipe
+  // material. The live crafting tracker then replaces this fallback with its
+  // uncrafted-stage requirements, including separate drill/tape use.
+  const fallback=['Phased Array Element','Iridium','Military Current Converter','Aramid','Caps','Relay','Wire','Powerline Cables','Insulating Tape','Wires','MRE','Bort Drill','Military Circuit Board','Military Battery','Virtex','VPX','SAS Drive','Military Board','Small Metal Plate','Bolts','Screw Nuts','Metal Bar','Tape'];
+  const craft=typeof window.unturnovAirdropNeeds==='function'?window.unturnovAirdropNeeds():fallback.map(name=>({name,needed:1,stage:'Airdrop ISR crafting (loading)'}));
+  for(const x of craft)add(x.name,x.needed,x.stage);
+  return needs;
+ }
+ function allSellItems(){
+  const seen=new Map();
+  const push=(name,category)=>{
+   const plain=String(name||'').trim();if(!plain)return;
+   const exact=plain.toLowerCase().replace(/\s+/g,' ');
+   if(!seen.has(exact))seen.set(exact,{name:plain,category:category||'Game items'});
+  };
+  for(const item of window.unturnovSellCatalog||[])push(item.name,item.category);
+  for(const item of sellExtra)push(item.name,item.category||'Added by players');
+  // Include user-entered quest materials even if not present in the older guide.
+  for(const player of players)for(const q of model[player]||[])for(const g of q.goals||[]){
+   if(g.type==='action'||/^(locate|local|kill|find|extract|visit|complete|reach|mark)\b/i.test(g.name))continue;
+   push(g.name,'Quest item');
+  }
+  return [...seen.values()];
+ }
+ function renderSellList(){
+  if(!$('sellList'))return;
+  const needs=sellNeeds();
+  const items=allSellItems().map(item=>{
+   const requirement=needs.get(sellKey(item.name));
+   return {...item,requirement,status:requirement?'keep':'sell'};
+  }).sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
+  const allSell=items.filter(x=>x.status==='sell').length;
+  const allKeep=items.length-allSell;
+  $('sellSummary').textContent=allSell+' without tracked requirements · '+allKeep+' currently needed';
+  $('sellMode').value=sellMode;
+  const needle=sellSearch.trim().toLowerCase();
+  const filtered=items.filter(x=>(sellMode==='all'||x.status===sellMode)&&(!needle||[x.name,x.category].join(' ').toLowerCase().includes(needle)));
+  $('sellList').innerHTML=filtered.length?filtered.map(x=>
+   `<tr><td>${esc(x.name)}</td><td>${esc(x.category)}</td><td>${x.status==='keep'?'Keep — currently needed':'No tracked requirement'}</td><td>${x.requirement?esc([...x.requirement.reasons].join(' · ')):'—'}</td></tr>`
+  ).join(''):'<tr><td colspan="4" class="muted">No matching items in this view.</td></tr>';
+  const result=$('sellLookupResult');
+  if(!needle){result.textContent='';return}
+  const exact=items.find(x=>sellKey(x.name)===sellKey(needle));
+  const match=needs.get(sellKey(needle));
+  if(!exact){
+   result.textContent=match?'Not in catalog, but REQUIRED by '+[...match.reasons].join(' · '):'Not in catalog: no requirement in current tracked quests or ISR build. You can add it below.';
+  }else result.textContent='';
+ }
+ async function syncSellCatalog(){
+  if(!ready())return;
+  while(sellPending.length){
+   const item=sellPending[0];
+   const r=await api('/rest/v1/unturnov_item_catalog?on_conflict=item_key','POST',[item],'resolution=ignore-duplicates,return=minimal');
+   if(!r.ok)throw Error('Sell catalog update failed ('+r.status+'); new names remain queued.');
+   sellPending.shift();localStorage.setItem(sellStore.pending,JSON.stringify(sellPending));
+  }
+  const r=await api('/rest/v1/unturnov_item_catalog?select=item_key,name,category&order=name.asc&limit=2000');
+  if(!r.ok)throw Error('Sell catalog lookup failed ('+r.status+').');
+  const rows=await r.json(),merged=new Map();
+  for(const x of sellExtra.concat(rows))merged.set(x.item_key,x);
+  sellExtra=[...merged.values()];
+  localStorage.setItem(sellStore.extras,JSON.stringify(sellExtra));
+ }
+ function addSellItem(){
+  const el=$('sellAddName'),name=el.value.trim().replace(/\s+/g,' ');
+  if(name.length<2||name.length>140){alert('Enter an item name between 2 and 140 characters.');return}
+  const key=name.toLowerCase();
+  if(allSellItems().some(x=>x.name.toLowerCase()===key)){alert('That item is already in the catalog.');return}
+  const item={item_key:key,name,category:'Added by players'};
+  sellExtra.push(item);sellPending.push(item);
+  localStorage.setItem(sellStore.extras,JSON.stringify(sellExtra));
+  localStorage.setItem(sellStore.pending,JSON.stringify(sellPending));
+  el.value='';
+  renderSellList();void sync();
+ }
+  function render(){rebuild();renderTabs();autoSelect();renderList();renderDetail();renderPersonal();renderTeam();renderSellList();renderStatus();}
  function emit(kind,qid,payload,reverse=null){const event={event_id:crypto.randomUUID(),player:profile,quest_id:qid,kind,payload,local_order:Date.now()+editCounter++};pending.push(event);if(reverse)undoStack.push({player:profile,qid,...reverse});persist();render();void sync();return event}
  function confirmEditorSwitch(){if(!edit)return true;if(!confirm('Discard unfinished quest changes?'))return false;edit=null;sessionStorage.removeItem(store.draft);return true}
  function showEditor(q){edit={id:q?.id||null,title:q?.title||'',trader:q?.trader||'',reward:q?.reward??1,goals:q?.goals?.map(g=>({...g}))||[{id:crypto.randomUUID(),name:'',total:1,type:'item',count:0}]};saveDraft();renderEditor()}
@@ -168,7 +276,7 @@
  function saveConnection(){const url=$('projectUrl').value.trim().replace(/\/$/,''),key=$('publicKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)||!(key.startsWith('sb_publishable_')||key.startsWith('eyJ'))){alert('Enter a Supabase Project URL and publishable (or legacy anon) key. Never use a secret key.');return}conf={url,key};localStorage.setItem(store.cfg,JSON.stringify(conf));serverError='';renderStatus();}
  async function fetchDeltas(){let loops=0;while(loops++<100){const path='/rest/v1/quest_events?seq=gt.'+maxSeq+'&select=seq,event_id,player,quest_id,kind,payload&order=seq.asc&limit=500';const r=await api(path);if(!r.ok){const m=await r.text();throw Error(r.status===404?'Run the v3 Supabase database migration first.':('Cloud read error '+r.status+': '+m.slice(0,120)))}const rows=await r.json();if(!Array.isArray(rows))throw Error('Unexpected cloud response');for(const x of rows){if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}maxSeq=Math.max(maxSeq,Number(x.seq)||0)}if(rows.length<500)break}}
  async function uploadPending(){while(pending.length){const e=pending[0];const row={event_id:e.event_id,player:e.player,quest_id:e.quest_id,kind:e.kind,payload:e.payload};const r=await api('/rest/v1/quest_events?on_conflict=event_id','POST',[row],'resolution=ignore-duplicates,return=representation');if(!r.ok){let msg=await r.text();throw Error('Cloud write error '+r.status+': '+msg.slice(0,120))}const inserted=await r.json();if(inserted?.[0]){const x=inserted[0];if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}/* Do not advance fetched cursor here: earlier concurrent writes may still be unseen. */}pending.shift();persist();renderStatus()}}
- async function sync(){if(activeSync||!ready())return;activeSync=true;serverError='';renderStatus();try{if(!await refreshAuth())return;await fetchDeltas();await uploadPending();await fetchDeltas();persist();lastSync=Date.now();localStorage.setItem('unturnov-v3-last-sync',String(lastSync));render()}catch(e){serverError=e.message;renderStatus()}finally{activeSync=false;renderStatus()}}
+ async function sync(){if(activeSync||!ready())return;activeSync=true;serverError='';renderStatus();try{if(!await refreshAuth())return;await fetchDeltas();await uploadPending();await fetchDeltas();await syncSellCatalog();persist();lastSync=Date.now();localStorage.setItem('unturnov-v3-last-sync',String(lastSync));render()}catch(e){serverError=e.message;renderStatus()}finally{activeSync=false;renderStatus()}}
  function handleClick(event){const btn=event.target.closest('button');if(!btn)return;
  const action=btn.dataset.action, id=btn.dataset.id,goal=btn.dataset.goal;const q=current().find(q=>q.id===id);
  if(btn.dataset.player){changePlayer(btn.dataset.player);return}
@@ -187,6 +295,7 @@
  if(action==='save-notes'&&q){noteEditing=false;const notes=$('notesBox').value;emit('quest_note',id,{notes},{kind:'quest_note',payload:{notes:q.notes||''}});return}
  if(action==='undo'){undoLast();return}
  if(action==='export'){exportBackup();return}
+ if(action==='sell-add-item'){addSellItem();return}
  if(action==='login'){void login();return}
  if(action==='signup'){void signup();return}
  if(action==='logout'){logout();return}
@@ -200,6 +309,10 @@
  $('sortSelect').onchange=e=>{sortMode=e.target.value;localStorage.setItem(store.sortPrefix+profile,sortMode);renderList()};
  $('filterSelect').onchange=e=>{if(!confirmEditorSwitch()){e.target.value=filter;return}filter=e.target.value;localStorage.setItem(store.filter,filter);selected=null;render()};
  $('search').oninput=e=>{search=e.target.value;renderList()};
+ $('sellMode').value=sellMode;
+ $('sellMode').onchange=e=>{sellMode=e.target.value;localStorage.setItem(sellStore.mode,sellMode);renderSellList()};
+ $('sellSearch').oninput=e=>{sellSearch=e.target.value;renderSellList()};
+ window.unturnovUpdateSell=renderSellList;
  $('backupFile').onchange=e=>void importBackup(e.target);
  document.addEventListener('click',handleClick);
  document.addEventListener('input',e=>{if(edit&&$('questDetail').contains(e.target)&&e.target.id!=='notesBox')recordInputs()});
