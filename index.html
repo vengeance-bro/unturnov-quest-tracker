@@ -13,12 +13,40 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 7px;
 details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}details label{font-size:13px}#syncState{font-weight:700}.notice{padding:12px;border-radius:9px;background:#1d3248;color:#c1d8f1;font-size:13px;line-height:1.6}input[type=file]{max-width:100%}#pendingCount{font-weight:700}
 @media(max-width:740px){main{grid-template-columns:1fr}.sidebar .panel{position:static}.quest-list{max-height:260px}.edit-goal{grid-template-columns:minmax(0,1fr) 72px}.edit-goal select{grid-column:1}.edit-goal button{grid-column:2}.goal-line{align-items:start}}
 [hidden]{display:none!important}
+
+/* Shared Airdrop ISR crafting tracker */
+.airdrop-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#e8f4ff;background:#29476d;border:1px solid #557da9;border-radius:9px;padding:8px 13px;margin-top:9px;font-weight:700}
+.airdrop-link:hover{background:#35618e}
+.airdrop-panel{scroll-margin-top:16px}
+.airdrop-panel>summary{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;font-size:20px;padding:2px 0 12px}
+.airdrop-panel>summary .muted{font-size:13px;font-weight:400}
+.airdrop-panel>summary:hover{color:#b7d7ff}
+.airdrop-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:13px 0}
+.airdrop-metric{background:#203249;border:1px solid #344b66;padding:11px;border-radius:10px}
+.airdrop-metric strong{display:block;font-size:19px;margin:5px 0 0;font-variant-numeric:tabular-nums}
+.airdrop-progress{width:100%;height:13px;accent-color:#4993f0}
+.airdrop-counter{display:flex;gap:5px;align-items:center;justify-content:flex-end;min-width:165px}
+.airdrop-counter button{font-size:17px;padding:4px 10px}
+.airdrop-counter input{width:69px;text-align:center;padding:7px 3px;font-variant-numeric:tabular-nums;appearance:textfield}
+.airdrop-counter input::-webkit-inner-spin-button{-webkit-appearance:none}
+.airdrop-check{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid #283a50;cursor:pointer}
+.airdrop-check input{width:19px;height:19px;accent-color:#4988ee}
+.airdrop-check small{margin-left:auto}
+.airdrop-recipe{border:1px solid #354c69;border-radius:10px;padding:11px 13px;margin:10px 0;background:#182941}
+.airdrop-recipe>summary{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.airdrop-recipe>summary strong{display:block}
+.airdrop-recipe>summary small{display:block;margin-top:4px}
+.craft-bubble{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;background:#27496e;border-radius:50%}
+#airdropSyncStatus{font-weight:650}
+@media(max-width:740px){.airdrop-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.airdrop-panel>summary{font-size:17px}}
+
 </style>
 </head>
 <body>
 <header>
  <h1>🎒 Unturnov Quest Tracker</h1><p>Shared quests for Nolan, Tyler, and Kalob</p>
  <nav id="tabs" class="tabs" aria-label="Player quests"></nav>
+ <a class="airdrop-link" href="#airdropSection">🛰️ Airdrop ISR crafting tracker ↓</a>
  <div class="cloud-row"><span id="syncState">Loading…</span><span class="muted" id="lastSynced">Last cloud sync: Never</span><span class="muted">Pending updates: <b id="pendingCount">0</b></span><button data-action="sync">↻ Sync</button><button data-action="undo">Undo last change</button></div>
 </header>
 <main>
@@ -42,8 +70,30 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <section class="panel" id="personal-tyler" hidden><h2>🎒 Tyler’s Personal Loot List</h2><p class="muted">Remaining items for Tyler's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootTyler"></tbody></table></div></section>
   <section class="panel" id="personal-kalob" hidden><h2>🎒 Kalob’s Personal Loot List</h2><p class="muted">Remaining items for Kalob's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootKalob"></tbody></table></div></section>
   <section class="panel"><h2>🧰 Team loot list</h2><p class="muted">Remaining items across unfinished quests for all three players. Each Bundle of Dogtags is counted as 10 individual Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Total</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div></section>
+  <details class="panel airdrop-panel" id="airdropSection" open>
+   <summary><strong>🛰️ Airdrop ISR Crafting Tracker</strong><span class="muted" id="airdropSummary">Loading recipe…</span></summary>
+   <p>One shared build for Nolan, Tyler and Kalob. Track materials collected, reusable tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
+   <div class="notice">Collection starts at zero because the screenshot counters may show one player's inventory, not the team's combined supplies. Enter what you actually have collected. Materials used in multiple recipes are totaled correctly; <strong>Wire</strong> and <strong>Wires</strong> are separate items.</div>
+   <div class="airdrop-metrics">
+    <div class="airdrop-metric"><small>Materials collected</small><strong id="airdropMaterialTotal">0 / 190</strong></div>
+    <div class="airdrop-metric"><small>Reusable tools</small><strong id="airdropToolTotal">0 / 2</strong></div>
+    <div class="airdrop-metric"><small>Subassemblies crafted</small><strong id="airdropStageTotal">0 / 3</strong></div>
+    <div class="airdrop-metric"><small>Final Airdrop ISR</small><strong id="airdropFinalStatus">Not crafted</strong></div>
+   </div>
+   <progress class="airdrop-progress" id="airdropProgress" value="0" max="190" aria-label="Airdrop material collection progress"></progress>
+   <h3>Required materials for one Airdrop ISR</h3>
+   <p class="muted">The quantities combine the Globe, Frame and Support recipes. Use +/− or type the total collected, then leave the field to save.</p>
+   <div class="overflow"><table><thead><tr><th>Material</th><th>Total needed</th><th>Collected</th></tr></thead><tbody id="airdropMaterials"></tbody></table></div>
+   <h3>Reusable crafting tools</h3><p class="muted">A single Bort Drill works for the Globe, Frame and final assembly. Tape is required for the Support. Tools are not counted as consumed materials.</p>
+   <div id="airdropTools"></div>
+   <h3>Build steps / recipes</h3><p class="muted">Expand a step to see its ingredients. Mark the component crafted after making it in-game; that is separate from recording collected ingredients.</p>
+   <div id="airdropStages"></div>
+   <div class="actions"><button data-airdrop-action="sync" type="button">↻ Sync crafting</button><button data-airdrop-action="download" type="button">Download crafting backup</button></div>
+   <p class="muted"><span id="airdropSyncStatus">Checking shared crafting progress…</span> · <span id="airdropLastSynced">Last sync: Not yet</span></p>
+  </details>
   <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
  </div>
 </main>
 <script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-personal-tabs"></script>
+<script src="./airdrop-isr.js?v=20261009-build1"></script>
 </body></html>
