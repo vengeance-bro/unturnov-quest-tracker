@@ -10,10 +10,13 @@
  if(!Array.isArray(remote))remote=[];if(!Array.isArray(pending))pending=[];
  let profile=players.includes(localStorage.getItem(store.profile))?localStorage.getItem(store.profile):'Nolan';
  let filter=localStorage.getItem(store.filter)||'active',sortMode=localStorage.getItem(store.sortPrefix+profile)||'pinned',search='',selected=null,edit=null,noteEditing=false,noteDraft='',model={Nolan:[],Tyler:[],Kalob:[],Dakota:[]};
- const sellStore={extras:'unturnov-sell-extra-items-v1',pending:'unturnov-sell-pending-v1',mode:'unturnov-sell-mode-v1'};
+ const sellStore={extras:'unturnov-sell-extra-items-v1',pending:'unturnov-sell-pending-v1',mode:'unturnov-sell-mode-v1',overrides:'unturnov-sell-manual-overrides-v1',overridePending:'unturnov-sell-manual-pending-v1'};
  let sellExtra=read(sellStore.extras,[]),sellPending=read(sellStore.pending,[]),sellMode=localStorage.getItem(sellStore.mode)||'sell',sellSearch='';
+ let sellOverrides=read(sellStore.overrides,{}),sellOverridePending=read(sellStore.overridePending,[]),sellOverrideError='';
  if(!Array.isArray(sellExtra))sellExtra=[];
  if(!Array.isArray(sellPending))sellPending=[];
+ if(!sellOverrides||typeof sellOverrides!=='object'||Array.isArray(sellOverrides))sellOverrides={};
+ if(!Array.isArray(sellOverridePending))sellOverridePending=[];
  let activeSync=false,lastSync=Number(localStorage.getItem('unturnov-v3-last-sync')||0)||null,serverError='',authEmail=session?.email||'',undoStack=[],editCounter=0;
  let eventIds=new Set(remote.map(e=>e.event_id)), maxSeq=Math.max(0,...remote.map(e=>Number(e.seq)||0));
  function persist(){try{localStorage.setItem(store.events,JSON.stringify(remote));localStorage.setItem(store.pending,JSON.stringify(pending))}catch(e){serverError='Browser storage is full. Download a backup immediately.'}}
@@ -179,22 +182,39 @@
   }
   return [...seen.values()];
  }
+ function manualSellDecision(key){
+  for(let i=sellOverridePending.length-1;i>=0;i--){
+   if(sellOverridePending[i].item_key===key)return sellOverridePending[i].decision;
+  }
+  return ['keep','sell'].includes(sellOverrides[key])?sellOverrides[key]:'auto';
+ }
  function renderSellList(){
   if(!$('sellList'))return;
   const needs=sellNeeds();
   const items=allSellItems().map(item=>{
-   const requirement=needs.get(sellKey(item.name));
-   return {...item,requirement,status:requirement?'keep':'sell'};
+   const key=sellKey(item.name),requirement=needs.get(key),automatic=requirement?'keep':'sell';
+   const manual=manualSellDecision(key),status=manual==='auto'?automatic:manual;
+   return {...item,key,requirement,automatic,manual,status,conflict:manual==='sell'&&!!requirement};
   }).sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
   const allSell=items.filter(x=>x.status==='sell').length;
   const allKeep=items.length-allSell;
-  $('sellSummary').textContent=allSell+' without tracked requirements · '+allKeep+' currently needed';
+  const manualCount=items.filter(x=>x.manual!=='auto').length;
+  $('sellSummary').textContent=allSell+' marked Sell · '+allKeep+' marked Keep · '+manualCount+' manual choices';
   $('sellMode').value=sellMode;
+  const info=$('sellOverrideStatus');
+  if(info)info.textContent=sellOverrideError?('⚠ '+sellOverrideError):sellOverridePending.length?
+   (sellOverridePending.length+' manual decision(s) waiting to sync'):'Manual decisions sync across all four players when signed in.';
   const needle=sellSearch.trim().toLowerCase();
   const filtered=items.filter(x=>(sellMode==='all'||x.status===sellMode)&&(!needle||[x.name,x.category].join(' ').toLowerCase().includes(needle)));
-  $('sellList').innerHTML=filtered.length?filtered.map(x=>
-   `<tr><td>${esc(x.name)}</td><td>${esc(x.category)}</td><td>${x.status==='keep'?'Keep — currently needed':'No tracked requirement'}</td><td>${x.requirement?esc([...x.requirement.reasons].join(' · ')):'—'}</td></tr>`
-  ).join(''):'<tr><td colspan="4" class="muted">No matching items in this view.</td></tr>';
+  $('sellList').innerHTML=filtered.length?filtered.map(x=>{
+   const recommendation=x.conflict?'⚠ Sell — still needed':x.manual==='sell'?'Sell (manual)':x.manual==='keep'?'Keep (manual)':x.automatic==='keep'?'Keep — currently needed':'Sell — not currently needed';
+   return `<tr><td>${esc(x.name)}</td><td>${esc(x.category)}</td><td class="${x.conflict?'warn':''}">${esc(recommendation)}</td>
+    <td><select class="sell-decision-select" data-sell-override="${esc(x.key)}" aria-label="Keep or sell ${esc(x.name)}">
+     <option value="auto" ${x.manual==='auto'?'selected':''}>Automatic</option>
+     <option value="keep" ${x.manual==='keep'?'selected':''}>Keep</option>
+     <option value="sell" ${x.manual==='sell'?'selected':''}>Sell</option></select></td>
+    <td>${x.requirement?esc([...x.requirement.reasons].join(' · ')):'—'}</td></tr>`;
+  }).join(''):'<tr><td colspan="5" class="muted">No matching items in this view.</td></tr>';
   const result=$('sellLookupResult');
   if(!needle){result.textContent='';return}
   const catalogMatch=items.some(x=>x.name.toLowerCase().includes(needle)||x.category.toLowerCase().includes(needle));
@@ -203,7 +223,44 @@
    result.textContent=match?'Not in catalog, but REQUIRED by '+[...match.reasons].join(' · '):'Not in catalog: no requirement in current tracked quests or ISR build. You can add it below.';
   }else result.textContent='';
  }
- async function syncSellCatalog(){
+ function changeSellDecision(control){
+  const key=sellKey(control.dataset.sellOverride),decision=control.value;
+  if(!['auto','keep','sell'].includes(decision))return;
+  if(!allSellItems().some(x=>sellKey(x.name)===key)){renderSellList();return}
+  const previous=manualSellDecision(key);
+  if(previous===decision)return;
+  const required=sellNeeds().get(key);
+  if(decision==='sell'&&required&&!confirm(
+   'WARNING: This item is still needed for: '+[...required.reasons].join(' · ')+
+   '. Move it to Sell anyway? Your team will still see the requirement.'
+  )){renderSellList();return}
+  sellOverridePending.push({item_key:key,decision});
+  try{localStorage.setItem(sellStore.overridePending,JSON.stringify(sellOverridePending))}
+  catch{sellOverrideError='Could not save your choice in browser storage.'}
+  renderSellList();void sync();
+ }
+ async function syncSellOverrides(){
+  if(!ready())return;
+  while(sellOverridePending.length){
+   const item=sellOverridePending[0];
+   const r=await api('/rest/v1/unturnov_sell_overrides?on_conflict=item_key','POST',
+    [{item_key:item.item_key,decision:item.decision,updated_at:new Date().toISOString()}],
+    'resolution=merge-duplicates,return=minimal');
+   if(!r.ok)throw Error('Could not sync Keep/Sell decisions ('+r.status+'). They remain saved on this browser.');
+   sellOverrides[item.item_key]=item.decision;
+   sellOverridePending.shift();
+   localStorage.setItem(sellStore.overrides,JSON.stringify(sellOverrides));
+   localStorage.setItem(sellStore.overridePending,JSON.stringify(sellOverridePending));
+  }
+  const r=await api('/rest/v1/unturnov_sell_overrides?select=item_key,decision&limit=2000');
+  if(!r.ok)throw Error('Could not load shared Keep/Sell decisions ('+r.status+').');
+  const rows=await r.json();
+  if(!Array.isArray(rows))throw Error('Invalid shared Keep/Sell data.');
+  sellOverrides=Object.fromEntries(rows.filter(x=>['auto','keep','sell'].includes(x.decision)).map(x=>[x.item_key,x.decision]));
+  localStorage.setItem(sellStore.overrides,JSON.stringify(sellOverrides));
+  sellOverrideError='';
+ }
+  async function syncSellCatalog(){
   if(!ready())return;
   while(sellPending.length){
    const item=sellPending[0];
@@ -279,7 +336,7 @@
  function saveConnection(){const url=$('projectUrl').value.trim().replace(/\/$/,''),key=$('publicKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)||!(key.startsWith('sb_publishable_')||key.startsWith('eyJ'))){alert('Enter a Supabase Project URL and publishable (or legacy anon) key. Never use a secret key.');return}conf={url,key};localStorage.setItem(store.cfg,JSON.stringify(conf));serverError='';renderStatus();}
  async function fetchDeltas(){let loops=0;while(loops++<100){const path='/rest/v1/quest_events?seq=gt.'+maxSeq+'&select=seq,event_id,player,quest_id,kind,payload&order=seq.asc&limit=500';const r=await api(path);if(!r.ok){const m=await r.text();throw Error(r.status===404?'Run the v3 Supabase database migration first.':('Cloud read error '+r.status+': '+m.slice(0,120)))}const rows=await r.json();if(!Array.isArray(rows))throw Error('Unexpected cloud response');for(const x of rows){if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}maxSeq=Math.max(maxSeq,Number(x.seq)||0)}if(rows.length<500)break}}
  async function uploadPending(){while(pending.length){const e=pending[0];const row={event_id:e.event_id,player:e.player,quest_id:e.quest_id,kind:e.kind,payload:e.payload};const r=await api('/rest/v1/quest_events?on_conflict=event_id','POST',[row],'resolution=ignore-duplicates,return=representation');if(!r.ok){let msg=await r.text();throw Error('Cloud write error '+r.status+': '+msg.slice(0,120))}const inserted=await r.json();if(inserted?.[0]){const x=inserted[0];if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}/* Do not advance fetched cursor here: earlier concurrent writes may still be unseen. */}pending.shift();persist();renderStatus()}}
- async function sync(){if(activeSync||!ready())return;activeSync=true;serverError='';renderStatus();try{if(!await refreshAuth())return;await fetchDeltas();await uploadPending();await fetchDeltas();await syncSellCatalog();persist();lastSync=Date.now();localStorage.setItem('unturnov-v3-last-sync',String(lastSync));render()}catch(e){serverError=e.message;renderStatus()}finally{activeSync=false;renderStatus()}}
+ async function sync(){if(activeSync||!ready())return;activeSync=true;serverError='';renderStatus();try{if(!await refreshAuth())return;await fetchDeltas();await uploadPending();await fetchDeltas();await syncSellCatalog();await syncSellOverrides();persist();lastSync=Date.now();localStorage.setItem('unturnov-v3-last-sync',String(lastSync));render()}catch(e){serverError=e.message;renderStatus()}finally{activeSync=false;renderStatus()}}
  function handleClick(event){const btn=event.target.closest('button');if(!btn)return;
  const action=btn.dataset.action, id=btn.dataset.id,goal=btn.dataset.goal;const q=current().find(q=>q.id===id);
  if(btn.dataset.player){changePlayer(btn.dataset.player);return}
@@ -319,7 +376,10 @@
  $('backupFile').onchange=e=>void importBackup(e.target);
  document.addEventListener('click',handleClick);
  document.addEventListener('input',e=>{if(edit&&$('questDetail').contains(e.target)&&e.target.id!=='notesBox')recordInputs()});
- document.addEventListener('change',e=>{if(edit&&$('questDetail').contains(e.target))recordInputs()});
+ document.addEventListener('change',e=>{
+  if(e.target.matches?.('[data-sell-override]')){changeSellDecision(e.target);return}
+  if(edit&&$('questDetail').contains(e.target))recordInputs();
+ });
  document.addEventListener('focusin',e=>{if(e.target?.id==='notesBox')noteEditing=true});
  document.addEventListener('focusout',e=>{if(e.target?.id==='notesBox')noteEditing=false});
  if(conf){$('projectUrl').value=conf.url;$('publicKey').value=conf.key}
