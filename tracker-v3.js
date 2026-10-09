@@ -4,7 +4,9 @@
  const store={cfg:'unturnov-supabase-public-config-v1',session:'unturnov-supabase-session-v1',events:'unturnov-v3-events',pending:'unturnov-v3-pending',profile:'unturnov-active-player-v1',filter:'unturnov-v3-filter',sortPrefix:'unturnov-v3-sort-',draft:'unturnov-v3-draft'};
  const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
  const read=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key));return v===null?fallback:v}catch{return fallback}};
- let conf=read(store.cfg,null),session=read(store.session,null),remote=read(store.events,[]),pending=read(store.pending,[]);
+ const PUBLIC_PROJECT={url:'https://lmgtqqxygylywhnohtis.supabase.co',key:'sb_publishable_Ff7RxSYbgb55TP8dAzwfLA_n00-RACs'};
+ let conf=read(store.cfg,null)||PUBLIC_PROJECT,session=read(store.session,null),remote=read(store.events,[]),pending=read(store.pending,[]);
+ if(!read(store.cfg,null))localStorage.setItem(store.cfg,JSON.stringify(PUBLIC_PROJECT));
  if(!Array.isArray(remote))remote=[];if(!Array.isArray(pending))pending=[];
  let profile=players.includes(localStorage.getItem(store.profile))?localStorage.getItem(store.profile):'Nolan';
  let filter=localStorage.getItem(store.filter)||'active',sortMode=localStorage.getItem(store.sortPrefix+profile)||'pinned',search='',selected=null,edit=null,noteEditing=false,noteDraft='',model={Nolan:[],Tyler:[],Kalob:[]};
