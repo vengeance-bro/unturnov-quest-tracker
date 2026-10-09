@@ -88,21 +88,21 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <section class="panel"><h2>🧰 Team loot list</h2><p class="muted">Remaining items across unfinished quests for all three players. Each Bundle of Dogtags is counted as 10 individual Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Total</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div></section>
   <details class="panel airdrop-panel" id="airdropSection" open>
    <summary><strong>🛰️ Airdrop ISR Crafting Tracker</strong><span class="muted" id="airdropSummary">Loading recipe…</span></summary>
-   <p>One shared build for Nolan, Tyler and Kalob. Track materials collected, reusable tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
-   <div class="notice">The tracker is shared between all three players. Each recipe has its own item counters; Bort Drill and Tape are reusable shared tools. <strong>Wire</strong> and <strong>Wires</strong> are separate materials.</div>
+   <p>One shared build for Nolan, Tyler and Kalob. Track materials collected, consumed crafting tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
+   <div class="notice">The tracker is shared between all three players. Each recipe has its own item counters. Bort Drills and Tape are consumed during crafting, so each use needs its own item. <strong>Wire</strong> and <strong>Wires</strong> are separate materials.</div>
    <div class="airdrop-metrics">
-    <div class="airdrop-metric"><small>Materials collected</small><strong id="airdropMaterialTotal">0 / 190</strong></div>
-    <div class="airdrop-metric"><small>Reusable tools</small><strong id="airdropToolTotal">0 / 2</strong></div>
+    <div class="airdrop-metric"><small>Materials collected</small><strong id="airdropMaterialTotal">0 / 194</strong></div>
+    <div class="airdrop-metric"><small>Drills & Tape (consumed)</small><strong id="airdropToolTotal">0 / 4</strong></div>
     <div class="airdrop-metric"><small>Subassemblies crafted</small><strong id="airdropStageTotal">0 / 3</strong></div>
     <div class="airdrop-metric"><small>Final Airdrop ISR</small><strong id="airdropFinalStatus">Not crafted</strong></div>
    </div>
-   <progress class="airdrop-progress" id="airdropProgress" value="0" max="190" aria-label="Airdrop material collection progress"></progress>
+   <progress class="airdrop-progress" id="airdropProgress" value="0" max="194" aria-label="Airdrop material collection progress"></progress>
    <div class="airdrop-actions actions">
     <button type="button" data-airdrop-action="sync">↻ Sync crafting</button>
     <button type="button" data-airdrop-action="download">Download crafting backup</button>
     <button type="button" class="danger" data-airdrop-action="reset"><span aria-hidden="true">↺</span> Reset Entire Build</button>
    </div>
-   <p class="muted">Track items within each section below. Each material count belongs to that specific subassembly; repeating materials are listed separately so nothing is double-counted.</p>
+   <p class="muted">Track items within each section below. Each Bort Drill or Tape is a one-use item, tracked separately in the Globe, Frame, Support, and final ISR recipes.</p>
    <div id="airdropStages" class="airdrop-sections"></div>
    <p class="muted"><span id="airdropSyncStatus">Checking shared crafting progress…</span> · <span id="airdropLastSynced">Last sync: Not yet</span></p>
   </details>
@@ -110,5 +110,5 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
  </div>
 </main>
 <script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-personal-tabs"></script>
-<script src="./airdrop-isr.js?v=20261009-build2-sections"></script>
+<script src="./airdrop-isr.js?v=20261009-consumable-tools"></script>
 </body></html>
