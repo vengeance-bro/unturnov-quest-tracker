@@ -58,6 +58,17 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
 
 .loot-section-heading{margin:20px 0 8px;padding-top:12px;border-top:1px solid #34465f;color:#dcecff}
 .loot-section-heading:first-of-type{border-top:0;margin-top:10px;padding-top:0}
+
+.sell-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.sell-controls label{margin:0}
+.sell-controls input,.sell-controls select{margin-top:6px}
+.sell-results{max-height:470px;overflow:auto;border:1px solid #2a415b;border-radius:9px}
+.sell-results table{min-width:650px}
+.sell-results th{position:sticky;top:0;background:#1a2d44;z-index:1}
+.sell-results td:nth-child(2){font-size:12px;color:#b2c5dc}
+.sell-results td:nth-child(3){font-weight:650;min-width:135px}
+#sellLookupResult:empty{display:none}
+@media(max-width:740px){.sell-controls{grid-template-columns:1fr}.sell-results{max-height:420px}}
 </style>
 </head>
 <body>
@@ -133,6 +144,31 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     <h3 class="loot-section-heading">✅ Actions to complete</h3>
     <div class="overflow"><table><thead><tr><th>Action</th><th>Total remaining</th><th>Who needs it</th></tr></thead><tbody id="teamActions"></tbody></table></div>
    </section>
+  <section class="panel" id="sellSection">
+    <h2>💰 Able to Sell / Keep</h2>
+    <p>Automatically compares known Unturnov items against <strong>all four players' outstanding quests</strong> and <strong>unfinished Airdrop ISR crafting steps</strong>.</p>
+    <div class="notice">“Able to sell” means <strong>no current requirement in the tracker</strong> — not a guarantee that the item isn't useful, needed for future quests, or accepted by a particular trader. Consider keeping valuable keys, gear, or special items. The community item list is broad but not every weapon, attachment, or modded item is documented.</div>
+    <p class="muted" id="sellSummary">Comparing current requirements…</p>
+    <div class="sell-controls">
+     <label>Show
+      <select id="sellMode" class="full" aria-label="Sell guide status filter">
+       <option value="sell">Able to Sell — no current requirements</option>
+       <option value="keep">Keep — currently needed</option>
+       <option value="all">All known items</option>
+      </select>
+     </label>
+     <label>Find an item
+      <input class="full" id="sellSearch" placeholder="Search item or category…" aria-label="Search Unturnov sell guide">
+     </label>
+    </div>
+    <p id="sellLookupResult" class="muted" role="status"></p>
+    <div class="overflow sell-results"><table><thead><tr><th>Item</th><th>Category</th><th>Recommendation</th><th>Needed for</th></tr></thead><tbody id="sellList"></tbody></table></div>
+    <h3>Know another Unturnov item?</h3>
+    <p class="muted">Add any missing game item to the shared catalog. It will automatically change from Able to Sell to Keep if a tracked quest or crafting recipe starts requiring it.</p>
+    <div class="actions"><input id="sellAddName" placeholder="Exact item name" aria-label="Missing Unturnov item" style="flex:1;min-width:150px">
+     <button type="button" class="primary" data-action="sell-add-item">+ Add to shared catalog</button></div>
+    <p class="muted">Based on the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3488332060" target="_blank" rel="noopener noreferrer">PandaHut Unturnov item guide</a>, the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3590261459" target="_blank" rel="noopener noreferrer">community loot guide</a>, your quests, and items added by players.</p>
+   </section>
   <details class="panel airdrop-panel" id="airdropSection" open>
    <summary><strong>🛰️ Airdrop ISR Crafting Tracker</strong><span class="muted" id="airdropSummary">Loading recipe…</span></summary>
    <p>One shared build for Nolan, Tyler, Kalob and Dakota. Track materials collected, consumed crafting tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
@@ -156,6 +192,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
  </div>
 </main>
-<script src="./core-v3.js?v=20261009-dakota-four"></script><script src="./tracker-v3.js?v=20261009-dakota-four"></script>
-<script src="./airdrop-isr.js?v=20261009-dakota-four"></script>
+<script src="./sell-catalog.js?v=20261009-catalog1"></script>
+<script src="./core-v3.js?v=20261009-dakota-four"></script><script src="./tracker-v3.js?v=20261009-sell-guide1"></script>
+<script src="./airdrop-isr.js?v=20261009-sell-guide1"></script>
 </body></html>
