@@ -163,7 +163,10 @@
  function allSellItems(){
   const seen=new Map();
   const push=(name,category)=>{
-   const plain=String(name||'').trim();if(!plain)return;
+   const raw=String(name||'').trim();if(!raw)return;
+   // Quest text sometimes uses an alternate name for the same physical loot.
+   const aliases={'damaged power supply units':'Damaged Power Supply Unit','propane':'Propa'};
+   const plain=aliases[raw.toLowerCase()]||raw;
    const exact=plain.toLowerCase().replace(/\s+/g,' ');
    if(!seen.has(exact))seen.set(exact,{name:plain,category:category||'Game items'});
   };
@@ -194,9 +197,9 @@
   ).join(''):'<tr><td colspan="4" class="muted">No matching items in this view.</td></tr>';
   const result=$('sellLookupResult');
   if(!needle){result.textContent='';return}
-  const exact=items.find(x=>sellKey(x.name)===sellKey(needle));
+  const catalogMatch=items.some(x=>x.name.toLowerCase().includes(needle)||x.category.toLowerCase().includes(needle));
   const match=needs.get(sellKey(needle));
-  if(!exact){
+  if(!catalogMatch){
    result.textContent=match?'Not in catalog, but REQUIRED by '+[...match.reasons].join(' · '):'Not in catalog: no requirement in current tracked quests or ISR build. You can add it below.';
   }else result.textContent='';
  }
