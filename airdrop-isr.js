@@ -6,14 +6,14 @@
   {key:'globe',name:'Airdrop ISR Globe',ingredients:[
    ['Phased Array Element',8],['Iridium',8],['Military Current Converter',1],['Aramid',12],
    ['Caps',6],['Relay',6],['Wire',16],['Powerline Cables',3],
-   ['Insulating Tape',5],['Wires',5],['MRE',6]],tools:['Bort Drill']},
+   ['Insulating Tape',5],['Wires',5],['MRE',6],['Bort Drill',1]]},
   {key:'frame',name:'Airdrop ISR Frame',ingredients:[
    ['Military Circuit Board',6],['Military Current Converter',4],['Military Battery',2],
    ['Virtex',4],['VPX',4],['SAS Drive',4],['Caps',6],['Relay',4],
-   ['Military Board',5],['Powerline Cables',3]],tools:['Bort Drill']},
+   ['Military Board',5],['Powerline Cables',3],['Bort Drill',1]]},
   {key:'support',name:'Airdrop ISR Support',ingredients:[
-   ['Small Metal Plate',16],['Bolts',10],['Screw Nuts',10],['Metal Bar',36]],tools:['Tape']},
-  {key:'airdrop',name:'Airdrop ISR',ingredients:[],tools:['Bort Drill'],components:['globe','frame','support']}
+   ['Small Metal Plate',16],['Bolts',10],['Screw Nuts',10],['Metal Bar',36],['Tape',1]]},
+  {key:'airdrop',name:'Airdrop ISR',ingredients:[['Bort Drill',1]],components:['globe','frame','support']}
  ];
  const materialKey=name=>name.toLowerCase().replace(/\s+/g,'-');
  const requirements=recipes.flatMap(recipe=>recipe.ingredients.map(([name,total])=>({
@@ -27,7 +27,8 @@
   const k=materialKey(req.name),old=legacyRequirements.get(k)||{total:0,parts:[]};
   old.total+=req.total;old.parts.push(req);legacyRequirements.set(k,old);
  }
- const tools=[{key:'bort-drill',name:'Bort Drill'},{key:'tape',name:'Tape'}];
+ const consumedToolNames=new Set(['Bort Drill','Tape']);
+ const consumedToolRequirements=requirements.filter(x=>consumedToolNames.has(x.name));
  const stages=recipes.map(x=>({key:x.key,name:x.name}));
  const localKeys={events:'unturnov-airdrop-remote-events-v1',pending:'unturnov-airdrop-pending-events-v1',last:'unturnov-airdrop-last-sync-v1'};
  function fromStorage(key,fallback){try{const x=JSON.parse(localStorage.getItem(key));return x===null?fallback:x}catch{return fallback}}
@@ -42,9 +43,8 @@
   catch(e){statusError='Browser storage full. Please free space and avoid clearing site data.'}
  }
  function reduce(){
-  const state={materials:{},tools:{},stages:{}};
+  const state={materials:{},stages:{}};
   for(const item of requirements)state.materials[item.key]=0;
-  for(const tool of tools)state.tools[tool.key]=false;
   for(const stage of stages)state.stages[stage.key]=false;
   const legacyCounts={};
   const events=remote.concat(pending.map((e,i)=>({...e,localOrder:i+1,seq:null})))
@@ -52,7 +52,6 @@
   for(const e of events){
    if(e.kind==='build_reset'){
     for(const item of requirements)state.materials[item.key]=0;
-    for(const tool of tools)state.tools[tool.key]=false;
     for(const stage of stages)state.stages[stage.key]=false;
     for(const key of Object.keys(legacyCounts))delete legacyCounts[key];
    }else if(e.kind==='material_delta'||e.kind==='material_set'){
@@ -72,7 +71,10 @@
      }
     }
    }else if(e.kind==='tool_set'){
-    if(Object.hasOwn(state.tools,e.item_key))state.tools[e.item_key]=e.payload?.owned===true;
+    // Old checkbox meant "I have at least one". Retain that one collected item in
+    // the first applicable recipe, without pretending it covers every use.
+    const oldKey=e.item_key==='bort-drill'?'globe:bort-drill':e.item_key==='tape'?'support:tape':null;
+    if(oldKey)state.materials[oldKey]=e.payload?.owned===true?1:0;
    }else if(e.kind==='stage_set'){
     if(Object.hasOwn(state.stages,e.item_key))state.stages[e.item_key]=e.payload?.crafted===true;
    }
@@ -111,7 +113,7 @@
   const heading=index===3?'Final Assembly':index===0?'1 · Globe':index===1?'2 · Frame':'3 · Support';
   const rows=refs.map(({name,qty,req})=>{
    const count=model.materials[req.key];
-   return `<tr><td>${esc(name)}</td><td>${qty}</td><td>
+   return `<tr><td>${esc(name)}${consumedToolNames.has(name)?' <small>(consumed)</small>':''}</td><td>${qty}</td><td>
     <div class="airdrop-counter">
      <button type="button" data-airdrop-action="delta" data-key="${req.key}" data-delta="-1" aria-label="Remove one ${esc(name)} from ${esc(recipe.name)}" ${count===0?'disabled':''}>−</button>
      <input type="number" inputmode="numeric" min="0" max="${qty}" step="1" data-airdrop-quantity="${req.key}" value="${count}" aria-label="${esc(recipe.name)} ${esc(name)} collected">
@@ -122,17 +124,11 @@
    const component=stages.find(x=>x.key===key);
    rows.push(`<tr><td>${esc(component.name)}</td><td>1</td><td>${model.stages[key]?'✓ Crafted':'Not crafted'}</td></tr>`);
   }
-  const toolMarkup=recipe.tools.map(name=>{
-   const tool=tools.find(x=>x.name===name);
-   return `<label class="airdrop-check"><input type="checkbox" data-airdrop-tool="${tool.key}" ${model.tools[tool.key]?'checked':''}>
-    <span>${esc(tool.name)} <small>(reusable tool)</small></span><small>${model.tools[tool.key]?'Available':'Not yet available'}</small></label>`;
-  }).join('');
   return `<section class="airdrop-recipe" id="airdrop-${recipe.key}" data-stage="${recipe.key}">
    <div class="row"><div><small class="muted">${heading}</small><h3>${esc(recipe.name)}</h3></div>
     <span class="airdrop-stage-status ${done?'good':'muted'}">${done?'✓ Crafted':index===3?'Final build not crafted':`${collected} / ${required} collected`}</span></div>
    <div class="overflow"><table><thead><tr><th>${index===3?'Subassembly':'Material'}</th><th>Needed</th><th>${index===3?'Status':'Collected'}</th></tr></thead>
     <tbody>${rows.join('')}</tbody></table></div>
-   <div class="airdrop-stage-tools"><strong>Required tools</strong>${toolMarkup}</div>
    <div class="actions"><button type="button" class="${done?'':'primary'}" data-airdrop-action="stage" data-key="${recipe.key}" aria-pressed="${done}">
     ${done?'↩ Mark not crafted':'✓ Mark '+esc(recipe.name)+' crafted'}</button></div>
   </section>`;
@@ -143,11 +139,11 @@
  reduce();
  const sum=requirements.reduce((n,x)=>n+x.total,0);
  const got=requirements.reduce((n,x)=>n+model.materials[x.key],0);
- const toolsGot=tools.filter(x=>model.tools[x.key]).length;
+ const toolsGot=consumedToolRequirements.reduce((n,x)=>n+model.materials[x.key],0);
  const stagesDone=stages.slice(0,3).filter(x=>model.stages[x.key]).length;
  $('airdropSummary').textContent=got+' / '+sum+' materials collected';
  $('airdropMaterialTotal').textContent=got+' / '+sum;
- $('airdropToolTotal').textContent=toolsGot+' / '+tools.length;
+ $('airdropToolTotal').textContent=toolsGot+' / '+consumedToolRequirements.length;
  $('airdropStageTotal').textContent=stagesDone+' / 3';
  $('airdropFinalStatus').textContent=model.stages.airdrop?'✓ Crafted':'Not crafted';
  $('airdropProgress').value=got;$('airdropProgress').max=sum;
@@ -203,7 +199,7 @@
   const action=btn.dataset.airdropAction,key=btn.dataset.key;
   if(action==='sync'){void sync();return}
   if(action==='reset'){
-   if(!confirm('RESET ALL SHARED AIRDROP ISR PROGRESS for everyone? This clears all material counts, Bort Drill/Tape selections, and the 4 crafted stages. The quest tracker is not affected.'))return;
+   if(!confirm('RESET ALL SHARED AIRDROP ISR PROGRESS for everyone? This clears all material counts (including consumed Tape and Bort Drills) and the 4 crafted stages. The quest tracker is not affected.'))return;
    emit('build_reset','all',{});return;
   }
   if(action==='delta'){
@@ -224,8 +220,6 @@
    const n=Number(x.value);
    if(!Number.isFinite(n)||!Number.isInteger(n)||n<0||n>req.total){alert('Enter a whole number between 0 and '+req.total+'.');x.value=model.materials[req.key];return}
    if(n!==model.materials[req.key])emit('material_set',req.key,{count:n});
-  }else if(x.matches('[data-airdrop-tool]')){
-   if(tools.some(t=>t.key===x.dataset.airdropTool))emit('tool_set',x.dataset.airdropTool,{owned:x.checked});
   }
  }
  function init(){
