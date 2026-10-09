@@ -8,7 +8,7 @@
  if(!Array.isArray(remote))remote=[];if(!Array.isArray(pending))pending=[];
  let profile=players.includes(localStorage.getItem(store.profile))?localStorage.getItem(store.profile):'Nolan';
  let filter=localStorage.getItem(store.filter)||'active',search='',selected=null,edit=null,noteEditing=false,noteDraft='',model={Nolan:[],Tyler:[],Kalob:[]};
- let activeSync=false,lastSync=null,serverError='',authEmail=session?.email||'',undoStack=[],editCounter=0;
+ let activeSync=false,lastSync=Number(localStorage.getItem('unturnov-v3-last-sync')||0)||null,serverError='',authEmail=session?.email||'',undoStack=[],editCounter=0;
  let eventIds=new Set(remote.map(e=>e.event_id)), maxSeq=Math.max(0,...remote.map(e=>Number(e.seq)||0));
  function persist(){try{localStorage.setItem(store.events,JSON.stringify(remote));localStorage.setItem(store.pending,JSON.stringify(pending))}catch(e){serverError='Browser storage is full. Download a backup immediately.'}}
  function rebuild(){model=globalThis.unturnovReduce(remote.concat(pending.map((e,i)=>({...e,seq:null,local_order:i+1}))))}
@@ -16,7 +16,7 @@
  function complete(q){return Array.isArray(q.goals)&&q.goals.every(g=>g.count>=g.total)}
  function shownQuests(){let a=current().filter(q=>filter==='deleted'?q.deleted:!q.deleted&&(filter==='all'||(filter==='completed'?complete(q):!complete(q))));const word=search.toLowerCase();if(word)a=a.filter(q=>[q.title,q.trader,...q.goals.map(g=>g.name)].join(' ').toLowerCase().includes(word));return a.sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||a.title.localeCompare(b.title))}
  function activeQuest(){return current().find(q=>q.id===selected)}
- function autoSelect(){if(!current().some(q=>q.id===selected&&!q.deleted))selected=shownQuests()[0]?.id||current().find(q=>!q.deleted)?.id||null}
+ function autoSelect(){const visible=shownQuests();if(!visible.some(q=>q.id===selected))selected=visible[0]?.id||null}
  function timeText(t){return t?new Date(t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'}):'Never'}
  function ready(){return !!(conf?.url&&conf?.key&&session?.access_token)}
  function renderStatus(){const state=$('syncState');if(!state)return;let msg=serverError?'⚠ '+serverError:(!conf?'Not configured — local draft only':!session?.access_token?'Signed out — local edits queued':pending.length?pending.length+' change(s) waiting to upload':activeSync?'Checking cloud…':'Cloud synchronized');
@@ -76,7 +76,7 @@
  function saveConnection(){const url=$('projectUrl').value.trim().replace(/\/$/,''),key=$('publicKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)||!(key.startsWith('sb_publishable_')||key.startsWith('eyJ'))){alert('Enter a Supabase Project URL and publishable (or legacy anon) key. Never use a secret key.');return}conf={url,key};localStorage.setItem(store.cfg,JSON.stringify(conf));serverError='';renderStatus();}
  async function fetchDeltas(){let loops=0;while(loops++<100){const path='/rest/v1/quest_events?seq=gt.'+maxSeq+'&select=seq,event_id,player,quest_id,kind,payload&order=seq.asc&limit=500';const r=await api(path);if(!r.ok){const m=await r.text();throw Error(r.status===404?'Run the v3 Supabase database migration first.':('Cloud read error '+r.status+': '+m.slice(0,120)))}const rows=await r.json();if(!Array.isArray(rows))throw Error('Unexpected cloud response');for(const x of rows){if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}maxSeq=Math.max(maxSeq,Number(x.seq)||0)}if(rows.length<500)break}}
  async function uploadPending(){while(pending.length){const e=pending[0];const row={event_id:e.event_id,player:e.player,quest_id:e.quest_id,kind:e.kind,payload:e.payload};const r=await api('/rest/v1/quest_events?on_conflict=event_id','POST',[row],'resolution=ignore-duplicates,return=representation');if(!r.ok){let msg=await r.text();throw Error('Cloud write error '+r.status+': '+msg.slice(0,120))}const inserted=await r.json();if(inserted?.[0]){const x=inserted[0];if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}maxSeq=Math.max(maxSeq,Number(x.seq)||0)}pending.shift();persist();renderStatus()}}
- async function sync(){if(activeSync||!ready())return;activeSync=true;serverError='';renderStatus();try{if(!await refreshAuth())return;await fetchDeltas();await uploadPending();await fetchDeltas();persist();lastSync=Date.now();render()}catch(e){serverError=e.message;renderStatus()}finally{activeSync=false;renderStatus()}}
+ async function sync(){if(activeSync||!ready())return;activeSync=true;serverError='';renderStatus();try{if(!await refreshAuth())return;await fetchDeltas();await uploadPending();await fetchDeltas();persist();lastSync=Date.now();localStorage.setItem('unturnov-v3-last-sync',String(lastSync));render()}catch(e){serverError=e.message;renderStatus()}finally{activeSync=false;renderStatus()}}
  function handleClick(event){const btn=event.target.closest('button');if(!btn)return;
  const action=btn.dataset.action, id=btn.dataset.id,goal=btn.dataset.goal;const q=current().find(q=>q.id===id);
  if(btn.dataset.player){changePlayer(btn.dataset.player);return}
