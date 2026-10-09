@@ -207,8 +207,8 @@
   const needle=sellSearch.trim().toLowerCase();
   const filtered=items.filter(x=>(sellMode==='all'||x.status===sellMode)&&(!needle||[x.name,x.category].join(' ').toLowerCase().includes(needle)));
   $('sellList').innerHTML=filtered.length?filtered.map(x=>{
-   const recommendation=x.conflict?'⚠ Sell — still needed':x.manual==='sell'?'Sell (manual)':x.manual==='keep'?'Keep (manual)':x.automatic==='keep'?'Keep — currently needed':'Sell — not currently needed';
-   return `<tr><td>${esc(x.name)}</td><td>${esc(x.category)}</td><td class="${x.conflict?'warn':''}">${esc(recommendation)}</td>
+   const recommendation=x.status==='sell'?'Sell - not needed':x.manual==='keep'?'Keep (manual)':'Keep — currently needed';
+   return `<tr><td>${esc(x.name)}</td><td>${esc(x.category)}</td><td>${esc(recommendation)}</td>
     <td><select class="sell-decision-select" data-sell-override="${esc(x.key)}" aria-label="Keep or sell ${esc(x.name)}">
      <option value="auto" ${x.manual==='auto'?'selected':''}>Automatic</option>
      <option value="keep" ${x.manual==='keep'?'selected':''}>Keep</option>
