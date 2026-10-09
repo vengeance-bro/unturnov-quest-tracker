@@ -30,6 +30,18 @@
  const consumedToolNames=new Set(['Bort Drill','Tape']);
  const consumedToolRequirements=requirements.filter(x=>consumedToolNames.has(x.name));
  const stages=recipes.map(x=>({key:x.key,name:x.name}));
+ // The sell guide protects supplies earmarked for any component not yet crafted.
+ // Collected counts are still reserved until that component is actually built.
+ window.unturnovAirdropNeeds=()=>{
+  const out=[];
+  if(!model||model.stages.airdrop)return out;
+  for(const recipe of recipes){
+   if(model.stages[recipe.key])continue;
+   for(const [name,needed] of recipe.ingredients)out.push({name,needed,stage:recipe.name});
+  }
+  return out;
+ };
+
  const localKeys={events:'unturnov-airdrop-remote-events-v1',pending:'unturnov-airdrop-pending-events-v1',last:'unturnov-airdrop-last-sync-v1'};
  function fromStorage(key,fallback){try{const x=JSON.parse(localStorage.getItem(key));return x===null?fallback:x}catch{return fallback}}
  let remote=fromStorage(localKeys.events,[]),pending=fromStorage(localKeys.pending,[]);
@@ -149,6 +161,7 @@
  $('airdropProgress').value=got;$('airdropProgress').max=sum;
  renderStages();
  renderStatus();
+ window.unturnovUpdateSell?.();
 }
  function emit(kind,item_key,payload){
   pending.push({event_id:crypto.randomUUID(),kind,item_key,payload,localOrder:Date.now()+pending.length});
