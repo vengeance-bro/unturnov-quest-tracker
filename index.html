@@ -62,7 +62,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
 </head>
 <body>
 <header>
- <h1>🎒 Unturnov Quest Tracker</h1><p>Shared quests for Nolan, Tyler, and Kalob</p>
+ <h1>🎒 Unturnov Quest Tracker</h1><p>Shared quests for Nolan, Tyler, Kalob, and Dakota</p>
  <nav id="tabs" class="tabs" aria-label="Player quests"></nav>
  <a class="airdrop-link" href="#airdropSection">🛰️ Airdrop ISR crafting tracker ↓</a>
  <div class="cloud-row"><span id="syncState">Loading…</span><span class="muted" id="lastSynced">Last cloud sync: Never</span><span class="muted">Pending updates: <b id="pendingCount">0</b></span><button data-action="sync">↻ Sync</button><button data-action="undo">Undo last change</button></div>
@@ -118,8 +118,16 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     <h3 class="loot-section-heading">✅ Actions to complete</h3>
     <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsKalob"></tbody></table></div>
    </section>
+  <section class="panel" id="personal-dakota" hidden>
+    <h2>🎒 Dakota’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Dakota's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootDakota"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsDakota"></tbody></table></div>
+   </section>
   <section class="panel"><h2>🧰 Team Loot List</h2>
-    <p class="muted">Remaining items and actions across Nolan, Tyler and Kalob. One Bundle of Dogtags counts as 10 individual Dogtags.</p>
+    <p class="muted">Remaining items and actions across Nolan, Tyler, Kalob and Dakota. One Bundle of Dogtags counts as 10 individual Dogtags.</p>
     <h3 class="loot-section-heading">📦 Items to collect</h3>
     <div class="overflow"><table><thead><tr><th>Item</th><th>Total needed</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div>
     <h3 class="loot-section-heading">✅ Actions to complete</h3>
@@ -127,7 +135,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
    </section>
   <details class="panel airdrop-panel" id="airdropSection" open>
    <summary><strong>🛰️ Airdrop ISR Crafting Tracker</strong><span class="muted" id="airdropSummary">Loading recipe…</span></summary>
-   <p>One shared build for Nolan, Tyler and Kalob. Track materials collected, consumed crafting tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
+   <p>One shared build for Nolan, Tyler, Kalob and Dakota. Track materials collected, consumed crafting tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
    <div class="notice">The tracker is shared between all three players. Each recipe has its own item counters. Bort Drills and Tape are consumed during crafting, so each use needs its own item. <strong>Wire</strong> and <strong>Wires</strong> are separate materials.</div>
    <div class="airdrop-metrics">
     <div class="airdrop-metric"><small>Materials collected</small><strong id="airdropMaterialTotal">0 / 194</strong></div>
@@ -148,6 +156,6 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
  </div>
 </main>
-<script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-viewer-ready"></script>
-<script src="./airdrop-isr.js?v=20261009-viewer-invite"></script>
+<script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-dakota-four"></script>
+<script src="./airdrop-isr.js?v=20261009-dakota-four"></script>
 </body></html>
