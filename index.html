@@ -56,6 +56,8 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
 .airdrop-recipe .actions{margin-bottom:0}
 @media(max-width:740px){.airdrop-recipe{padding:12px}.airdrop-counter{min-width:132px;gap:3px}.airdrop-counter input{width:54px}.airdrop-counter button{padding:4px 8px}}
 
+.loot-section-heading{margin:20px 0 8px;padding-top:12px;border-top:1px solid #34465f;color:#dcecff}
+.loot-section-heading:first-of-type{border-top:0;margin-top:10px;padding-top:0}
 </style>
 </head>
 <body>
@@ -82,10 +84,37 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
  </aside>
  <div>
   <section class="panel" id="questDetail"></section>
-  <section class="panel" id="personal-nolan" hidden><h2>🎒 Nolan’s Personal Loot List</h2><p class="muted">Remaining items for Nolan's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootNolan"></tbody></table></div></section>
-  <section class="panel" id="personal-tyler" hidden><h2>🎒 Tyler’s Personal Loot List</h2><p class="muted">Remaining items for Tyler's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootTyler"></tbody></table></div></section>
-  <section class="panel" id="personal-kalob" hidden><h2>🎒 Kalob’s Personal Loot List</h2><p class="muted">Remaining items for Kalob's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootKalob"></tbody></table></div></section>
-  <section class="panel"><h2>🧰 Team loot list</h2><p class="muted">Remaining items across unfinished quests for all three players. Each Bundle of Dogtags is counted as 10 individual Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Total</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div></section>
+  <section class="panel" id="personal-nolan" hidden>
+    <h2>🎒 Nolan’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Nolan's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootNolan"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsNolan"></tbody></table></div>
+   </section>
+  <section class="panel" id="personal-tyler" hidden>
+    <h2>🎒 Tyler’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Tyler's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootTyler"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsTyler"></tbody></table></div>
+   </section>
+  <section class="panel" id="personal-kalob" hidden>
+    <h2>🎒 Kalob’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Kalob's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootKalob"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsKalob"></tbody></table></div>
+   </section>
+  <section class="panel"><h2>🧰 Team Loot List</h2>
+    <p class="muted">Remaining items and actions across Nolan, Tyler and Kalob. One Bundle of Dogtags counts as 10 individual Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Total needed</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Total remaining</th><th>Who needs it</th></tr></thead><tbody id="teamActions"></tbody></table></div>
+   </section>
   <details class="panel airdrop-panel" id="airdropSection" open>
    <summary><strong>🛰️ Airdrop ISR Crafting Tracker</strong><span class="muted" id="airdropSummary">Loading recipe…</span></summary>
    <p>One shared build for Nolan, Tyler and Kalob. Track materials collected, consumed crafting tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
@@ -109,6 +138,6 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
  </div>
 </main>
-<script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-personal-tabs"></script>
+<script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-items-actions"></script>
 <script src="./airdrop-isr.js?v=20261009-clean-labels"></script>
 </body></html>
