@@ -87,7 +87,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <div id="questList" class="quest-list"></div>
  </section>
  <section class="panel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p>
-  <details><summary>Sign in / sign out</summary><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Your approved email"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Account password"></label><div class="actions"><button class="primary" data-action="login">Sign in</button><button data-action="logout">Sign out</button></div></details>
+  <details><summary>Sign in / create account / sign out</summary><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Your approved email"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Account password"></label><div class="actions"><button class="primary" data-action="login">Sign in</button><button data-action="signup">Create account</button><button data-action="logout">Sign out</button></div></details>
   <details><summary>Connection settings (advanced)</summary><p class="muted">Use the same Supabase project on every computer. Never enter a secret or service-role key.</p><label>Project URL<input id="projectUrl" placeholder="https://...supabase.co"></label><label>Publishable key<input id="publicKey" placeholder="sb_publishable_..."></label><button data-action="save-config">Save connection</button></details>
   <details><summary>Backups & restore</summary><p class="muted">Downloads all three players' quests and the saved change history. Keep the backup somewhere safe.</p><button data-action="export">Download full backup</button><label>Restore from backup<input id="backupFile" type="file" accept=".json,application/json"></label></details>
  </section>
@@ -148,6 +148,6 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
  </div>
 </main>
-<script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-quest-sort"></script>
-<script src="./airdrop-isr.js?v=20261009-clean-labels"></script>
+<script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-viewer-invite"></script>
+<script src="./airdrop-isr.js?v=20261009-viewer-invite"></script>
 </body></html>
