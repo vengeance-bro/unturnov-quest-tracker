@@ -1,20 +1,45 @@
 (function unturnovApp(){
  'use strict';
  const players=['Nolan','Tyler','Kalob'], REPO='https://github.com/vengeance-bro/unturnov-quest-tracker';
- const store={cfg:'unturnov-supabase-public-config-v1',session:'unturnov-supabase-session-v1',events:'unturnov-v3-events',pending:'unturnov-v3-pending',profile:'unturnov-active-player-v1',filter:'unturnov-v3-filter',draft:'unturnov-v3-draft'};
+ const store={cfg:'unturnov-supabase-public-config-v1',session:'unturnov-supabase-session-v1',events:'unturnov-v3-events',pending:'unturnov-v3-pending',profile:'unturnov-active-player-v1',filter:'unturnov-v3-filter',sortPrefix:'unturnov-v3-sort-',draft:'unturnov-v3-draft'};
  const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
  const read=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key));return v===null?fallback:v}catch{return fallback}};
  let conf=read(store.cfg,null),session=read(store.session,null),remote=read(store.events,[]),pending=read(store.pending,[]);
  if(!Array.isArray(remote))remote=[];if(!Array.isArray(pending))pending=[];
  let profile=players.includes(localStorage.getItem(store.profile))?localStorage.getItem(store.profile):'Nolan';
- let filter=localStorage.getItem(store.filter)||'active',search='',selected=null,edit=null,noteEditing=false,noteDraft='',model={Nolan:[],Tyler:[],Kalob:[]};
+ let filter=localStorage.getItem(store.filter)||'active',sortMode=localStorage.getItem(store.sortPrefix+profile)||'pinned',search='',selected=null,edit=null,noteEditing=false,noteDraft='',model={Nolan:[],Tyler:[],Kalob:[]};
  let activeSync=false,lastSync=Number(localStorage.getItem('unturnov-v3-last-sync')||0)||null,serverError='',authEmail=session?.email||'',undoStack=[],editCounter=0;
  let eventIds=new Set(remote.map(e=>e.event_id)), maxSeq=Math.max(0,...remote.map(e=>Number(e.seq)||0));
  function persist(){try{localStorage.setItem(store.events,JSON.stringify(remote));localStorage.setItem(store.pending,JSON.stringify(pending))}catch(e){serverError='Browser storage is full. Download a backup immediately.'}}
  function rebuild(){model=globalThis.unturnovReduce(remote.concat(pending.map((e,i)=>({...e,seq:null,local_order:i+1}))))}
  function current(){return model[profile]||[]}
  function complete(q){return Array.isArray(q.goals)&&q.goals.every(g=>g.count>=g.total)}
- function shownQuests(){let a=current().filter(q=>filter==='deleted'?q.deleted:!q.deleted&&(filter==='all'||(filter==='completed'?complete(q):!complete(q))));const word=search.toLowerCase();if(word)a=a.filter(q=>[q.title,q.trader,...q.goals.map(g=>g.name)].join(' ').toLowerCase().includes(word));return a.sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||a.title.localeCompare(b.title))}
+ function questProgress(q){
+  if(!Array.isArray(q.goals)||!q.goals.length)return 0;
+  return q.goals.reduce((sum,g)=>sum+Math.min(1,Math.max(0,(Number(g.count)||0)/(Math.max(1,Number(g.total)||1)))),0)/q.goals.length;
+ }
+ function shownQuests(){
+  const all=current();
+  let quests=all.filter(q=>filter==='deleted'?q.deleted:!q.deleted&&(filter==='all'||(filter==='completed'?complete(q):!complete(q))));
+  const word=search.toLowerCase();
+  if(word)quests=quests.filter(q=>[q.title,q.trader,...q.goals.map(g=>g.name)].join(' ').toLowerCase().includes(word));
+  const order=new Map(all.map((q,i)=>[q.id,i]));
+  const byName=(a,b)=>a.title.localeCompare(b.title,undefined,{sensitivity:'base'});
+  return quests.sort((a,b)=>{
+   let difference=0;
+   switch(sortMode){
+    case 'name-asc': return byName(a,b);
+    case 'name-desc': return -byName(a,b);
+    case 'trader': difference=a.trader.localeCompare(b.trader,undefined,{sensitivity:'base'});break;
+    case 'progress-high': difference=questProgress(b)-questProgress(a);break;
+    case 'progress-low': difference=questProgress(a)-questProgress(b);break;
+    case 'newest': difference=(order.get(b.id)??0)-(order.get(a.id)??0);break;
+    case 'oldest': difference=(order.get(a.id)??0)-(order.get(b.id)??0);break;
+    default: difference=Number(!!b.pinned)-Number(!!a.pinned);
+   }
+   return difference||byName(a,b);
+  });
+ }
  function activeQuest(){return current().find(q=>q.id===selected)}
  function autoSelect(){const visible=shownQuests();if(!visible.some(q=>q.id===selected))selected=visible[0]?.id||null}
  function timeText(t){return t?new Date(t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'}):'Never'}
@@ -26,7 +51,7 @@
  function renderList(){
  const entries=shownQuests();$('questList').innerHTML=entries.length?entries.map(q=>`<button type="button" data-action="select" data-id="${esc(q.id)}" class="quest-row ${selected===q.id?'active':''}"><span><b>${q.pinned?'📌 ':''}${esc(q.title)}</b><small>${esc(q.trader)}</small></span><small>${q.goals.filter(g=>g.count>=g.total).length}/${q.goals.length} ${complete(q)?'✓':''}</small></button>`).join(''):'<p class="muted">No quests for this filter.</p>';
  const alive=current().filter(q=>!q.deleted), finished=alive.filter(complete).length;
- $('questStats').textContent=finished+' of '+alive.length+' complete';$('filterSelect').value=filter;$('search').value=search;
+ $('questStats').textContent=finished+' of '+alive.length+' complete';$('filterSelect').value=filter;$('sortSelect').value=sortMode;$('search').value=search;
  }
  function renderDetail(){
  if(edit)return;
@@ -109,7 +134,7 @@
  const qid=d.id||crypto.randomUUID(),before=activeQuest(),goals=d.goals.map(g=>({...g,name:g.name.trim(),total:Number(g.total),count:Number(g.count)||0}));
  const payload=d.id?{title:d.title.trim(),trader:d.trader.trim(),reward:d.reward,goals}:{quest:{id:qid,title:d.title.trim(),trader:d.trader.trim(),reward:d.reward,goals,pinned:false,notes:'',deleted:false}};
  edit=null;sessionStorage.removeItem(store.draft);filter='active';localStorage.setItem(store.filter,filter);selected=qid;emit(d.id?'quest_edited':'quest_created',qid,payload,d.id?{kind:'quest_edited',payload:{title:before?.title,trader:before?.trader,reward:before?.reward,goals:before?.goals}}:{kind:'quest_deleted',payload:{}})}
- function changePlayer(player){if(!players.includes(player)||player===profile)return;if(!confirmEditorSwitch())return;profile=player;localStorage.setItem(store.profile,profile);selected=null;noteEditing=false;render()}
+ function changePlayer(player){if(!players.includes(player)||player===profile)return;if(!confirmEditorSwitch())return;profile=player;localStorage.setItem(store.profile,profile);sortMode=localStorage.getItem(store.sortPrefix+profile)||'pinned';selected=null;noteEditing=false;render()}
  function undoLast(){const last=undoStack.pop();if(!last){alert('No recent change to undo in this session.');return}const prev=profile;profile=last.player;emit(last.kind,last.qid,last.payload);profile=prev;render()}
  function download(filename,body){const b=new Blob([JSON.stringify(body,null,2)],{type:'application/json'}),a=document.createElement('a'),url=URL.createObjectURL(b);a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)}
  function exportBackup(){download('unturnov-backup-'+new Date().toISOString().slice(0,10)+'.json',{app:'Unturnov',version:3,exported:new Date().toISOString(),profiles:model,events:remote,pending});}
@@ -148,6 +173,8 @@
  function init(){
  $('tabs').innerHTML=players.map(p=>`<button type="button" data-player="${p}" class="tab">${p}’s Quests</button>`).join('');
  $('filterSelect').value=filter;
+ $('sortSelect').value=sortMode;
+ $('sortSelect').onchange=e=>{sortMode=e.target.value;localStorage.setItem(store.sortPrefix+profile,sortMode);renderList()};
  $('filterSelect').onchange=e=>{if(!confirmEditorSwitch()){e.target.value=filter;return}filter=e.target.value;localStorage.setItem(store.filter,filter);selected=null;render()};
  $('search').oninput=e=>{search=e.target.value;renderList()};
  $('backupFile').onchange=e=>void importBackup(e.target);
