@@ -1,6 +1,7 @@
 (function airdropApp() {
  'use strict';
  const $=id=>document.getElementById(id);
+ const isViewer=()=>{try{return String(JSON.parse(localStorage.getItem('unturnov-supabase-session-v1'))?.email||'').toLowerCase()==='yoshiseggs911@gmail.com'}catch{return false}};
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const recipes=[
   {key:'globe',name:'Airdrop ISR Globe',ingredients:[
@@ -148,9 +149,11 @@
  $('airdropFinalStatus').textContent=model.stages.airdrop?'✓ Crafted':'Not crafted';
  $('airdropProgress').value=got;$('airdropProgress').max=sum;
  renderStages();
+ if(isViewer())document.querySelectorAll('#airdropSection input[data-airdrop-quantity],#airdropSection button[data-airdrop-action="delta"],#airdropSection button[data-airdrop-action="stage"],#airdropSection button[data-airdrop-action="reset"]').forEach(el=>el.disabled=true);
  renderStatus();
 }
  function emit(kind,item_key,payload){
+  if(isViewer()){alert('This account can view crafting progress but cannot edit it.');return}
   pending.push({event_id:crypto.randomUUID(),kind,item_key,payload,localOrder:Date.now()+pending.length});
   persist();render();void sync();
  }
@@ -197,6 +200,7 @@
   const btn=e.target.closest('button[data-airdrop-action]');
   if(!btn)return;
   const action=btn.dataset.airdropAction,key=btn.dataset.key;
+  if(isViewer()&&!['sync','download'].includes(action)){alert('This account has view-only access.');return}
   if(action==='sync'){void sync();return}
   if(action==='reset'){
    if(!confirm('RESET ALL SHARED AIRDROP ISR PROGRESS for everyone? This clears all material counts (including consumed Tape and Bort Drills) and the 4 crafted stages. The quest tracker is not affected.'))return;
@@ -215,6 +219,7 @@
  }
  function onChange(e){
   const x=e.target;
+  if(isViewer()){alert('This account has view-only access.');render();return}
   if(x.matches('[data-airdrop-quantity]')){
    const req=requirementMap.get(x.dataset.airdropQuantity);if(!req)return;
    const n=Number(x.value);
