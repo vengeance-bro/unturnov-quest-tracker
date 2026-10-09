@@ -168,7 +168,7 @@
   const push=(name,category)=>{
    const raw=String(name||'').trim();if(!raw)return;
    // Quest text sometimes uses an alternate name for the same physical loot.
-   const aliases={'damaged power supply units':'Damaged Power Supply Unit','propane':'Propa'};
+   const aliases={'damaged power supply units':'Damaged Power Supply Unit','propa':'Propane'};
    const plain=aliases[raw.toLowerCase()]||raw;
    const exact=plain.toLowerCase().replace(/\s+/g,' ');
    if(!seen.has(exact))seen.set(exact,{name:plain,category:category||'Game items'});
