@@ -47,7 +47,29 @@
  function renderTeam(){
  const list=teamLoot();$('teamLoot').innerHTML=list.length?list.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.total}</td><td>${players.map(p=>x.by[p]?p+': '+x.by[p]:'').filter(Boolean).join(' · ')}</td></tr>`).join(''):'<tr><td colspan="3" class="muted">Nothing needed right now.</td></tr>';
  }
- function render(){rebuild();renderTabs();autoSelect();renderList();renderDetail();renderTeam();renderStatus()}
+ function personalLoot(player){
+ const items=new Map();
+ for(const q of model[player]||[]){
+  if(q.deleted||complete(q))continue;
+  for(const g of q.goals){
+   if(g.type==='action')continue;
+   const name=canonical(g.name),mult=/^bundle of dogtags$/i.test(g.name)?10:1;
+   const remaining=Math.max(0,(g.total-g.count)*mult);
+   if(!remaining)continue;
+   const key=name.toLowerCase(),item=items.get(key)||{name,total:0,quests:new Map()};
+   item.total+=remaining;
+   item.quests.set(q.title,(item.quests.get(q.title)||0)+remaining);
+   items.set(key,item);
+  }
+ }
+ return [...items.values()].sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
+ }
+ function renderPersonal(){
+ $('personalLootTitle').textContent='🎒 '+profile+'’s Personal Loot List';
+ const list=personalLoot(profile);
+ $('personalLoot').innerHTML=list.length?list.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.total}</td><td>${[...x.quests].map(([name,n])=>esc(name)+' ('+n+')').join(' · ')}</td></tr>`).join(''):'<tr><td colspan="3" class="muted">No remaining items for this player’s active quests.</td></tr>';
+ }
+ function render(){rebuild();renderTabs();autoSelect();renderList();renderDetail();renderPersonal();renderTeam();renderStatus()}
  function emit(kind,qid,payload,reverse=null){const event={event_id:crypto.randomUUID(),player:profile,quest_id:qid,kind,payload,local_order:Date.now()+editCounter++};pending.push(event);if(reverse)undoStack.push({player:profile,qid,...reverse});persist();render();void sync();return event}
  function confirmEditorSwitch(){if(!edit)return true;if(!confirm('Discard unfinished quest changes?'))return false;edit=null;sessionStorage.removeItem(store.draft);return true}
  function showEditor(q){edit={id:q?.id||null,title:q?.title||'',trader:q?.trader||'',reward:q?.reward??1,goals:q?.goals?.map(g=>({...g}))||[{id:crypto.randomUUID(),name:'',total:1,type:'item',count:0}]};saveDraft();renderEditor()}
