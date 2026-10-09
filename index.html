@@ -40,6 +40,22 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
 #airdropSyncStatus{font-weight:650}
 @media(max-width:740px){.airdrop-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.airdrop-panel>summary{font-size:17px}}
 
+
+.airdrop-sections{display:grid;grid-template-columns:minmax(0,1fr);gap:13px;margin:17px 0}
+.airdrop-recipe{padding:16px;border:1px solid #496382;background:#192b40;border-radius:12px;min-width:0;margin:0}
+.airdrop-recipe h3{margin:4px 0 0;font-size:19px}
+.airdrop-stage-status{font-size:13px;font-weight:700}
+.airdrop-stage-tools{margin-top:15px;border-top:1px solid #354d68;padding-top:12px}
+.airdrop-stage-tools>strong{font-size:13px}
+.airdrop-actions{align-items:center}
+.airdrop-actions button.danger{background:#44242d;color:#ffccd0;border-color:#a7616d}
+.airdrop-actions button.danger:hover{background:#672c39}
+.airdrop-recipe table td:nth-child(2),.airdrop-recipe table th:nth-child(2){text-align:center;min-width:62px}
+.airdrop-recipe table td:nth-child(3),.airdrop-recipe table th:nth-child(3){text-align:right}
+.airdrop-recipe .airdrop-counter{margin-left:auto}
+.airdrop-recipe .actions{margin-bottom:0}
+@media(max-width:740px){.airdrop-recipe{padding:12px}.airdrop-counter{min-width:132px;gap:3px}.airdrop-counter input{width:54px}.airdrop-counter button{padding:4px 8px}}
+
 </style>
 </head>
 <body>
@@ -73,7 +89,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   <details class="panel airdrop-panel" id="airdropSection" open>
    <summary><strong>🛰️ Airdrop ISR Crafting Tracker</strong><span class="muted" id="airdropSummary">Loading recipe…</span></summary>
    <p>One shared build for Nolan, Tyler and Kalob. Track materials collected, reusable tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
-   <div class="notice">Collection starts at zero because the screenshot counters may show one player's inventory, not the team's combined supplies. Enter what you actually have collected. Materials used in multiple recipes are totaled correctly; <strong>Wire</strong> and <strong>Wires</strong> are separate items.</div>
+   <div class="notice">The tracker is shared between all three players. Each recipe has its own item counters; Bort Drill and Tape are reusable shared tools. <strong>Wire</strong> and <strong>Wires</strong> are separate materials.</div>
    <div class="airdrop-metrics">
     <div class="airdrop-metric"><small>Materials collected</small><strong id="airdropMaterialTotal">0 / 190</strong></div>
     <div class="airdrop-metric"><small>Reusable tools</small><strong id="airdropToolTotal">0 / 2</strong></div>
@@ -81,19 +97,18 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     <div class="airdrop-metric"><small>Final Airdrop ISR</small><strong id="airdropFinalStatus">Not crafted</strong></div>
    </div>
    <progress class="airdrop-progress" id="airdropProgress" value="0" max="190" aria-label="Airdrop material collection progress"></progress>
-   <h3>Required materials for one Airdrop ISR</h3>
-   <p class="muted">The quantities combine the Globe, Frame and Support recipes. Use +/− or type the total collected, then leave the field to save.</p>
-   <div class="overflow"><table><thead><tr><th>Material</th><th>Total needed</th><th>Collected</th></tr></thead><tbody id="airdropMaterials"></tbody></table></div>
-   <h3>Reusable crafting tools</h3><p class="muted">A single Bort Drill works for the Globe, Frame and final assembly. Tape is required for the Support. Tools are not counted as consumed materials.</p>
-   <div id="airdropTools"></div>
-   <h3>Build steps / recipes</h3><p class="muted">Expand a step to see its ingredients. Mark the component crafted after making it in-game; that is separate from recording collected ingredients.</p>
-   <div id="airdropStages"></div>
-   <div class="actions"><button data-airdrop-action="sync" type="button">↻ Sync crafting</button><button data-airdrop-action="download" type="button">Download crafting backup</button></div>
+   <div class="airdrop-actions actions">
+    <button type="button" data-airdrop-action="sync">↻ Sync crafting</button>
+    <button type="button" data-airdrop-action="download">Download crafting backup</button>
+    <button type="button" class="danger" data-airdrop-action="reset"><span aria-hidden="true">↺</span> Reset Entire Build</button>
+   </div>
+   <p class="muted">Track items within each section below. Each material count belongs to that specific subassembly; repeating materials are listed separately so nothing is double-counted.</p>
+   <div id="airdropStages" class="airdrop-sections"></div>
    <p class="muted"><span id="airdropSyncStatus">Checking shared crafting progress…</span> · <span id="airdropLastSynced">Last sync: Not yet</span></p>
   </details>
   <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
  </div>
 </main>
 <script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-personal-tabs"></script>
-<script src="./airdrop-isr.js?v=20261009-build1"></script>
+<script src="./airdrop-isr.js?v=20261009-build2-sections"></script>
 </body></html>
