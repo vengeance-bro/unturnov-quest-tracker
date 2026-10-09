@@ -1,5 +1,5 @@
 globalThis.unturnovReduce=function unturnovReduce(inputEvents){
- const profiles={Nolan:[],Tyler:[],Kalob:[]};
+ const profiles={Nolan:[],Tyler:[],Kalob:[],Dakota:[]};
  const events=[...inputEvents].sort((a,b)=>(a.seq??Number.MAX_SAFE_INTEGER)-(b.seq??Number.MAX_SAFE_INTEGER)||(a.local_order||0)-(b.local_order||0));
  for(const e of events){
   const list=profiles[e.player];if(!list)continue;
