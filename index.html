@@ -63,7 +63,10 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
 .sell-controls label{margin:0}
 .sell-controls input,.sell-controls select{margin-top:6px}
 .sell-results{max-height:470px;overflow:auto;border:1px solid #2a415b;border-radius:9px}
-.sell-results table{min-width:650px}
+.sell-results table{min-width:740px}
+.sell-decision-select{min-width:120px;max-width:160px;padding:7px;font-size:13px}
+.sell-results td:nth-child(4){min-width:125px}
+.sell-results td.warn{font-weight:750;color:#ffb77f}
 .sell-results th{position:sticky;top:0;background:#1a2d44;z-index:1}
 .sell-results td:nth-child(2){font-size:12px;color:#b2c5dc}
 .sell-results td:nth-child(3){font-weight:650;min-width:135px}
@@ -147,14 +150,15 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
    </section>
   <section class="panel" id="sellSection">
     <h2>💰 Able to Sell / Keep</h2>
-    <p>Automatically compares known Unturnov items against <strong>all four players' outstanding quests</strong> and <strong>unfinished Airdrop ISR crafting steps</strong>.</p>
-    <div class="notice">“Able to sell” means <strong>no current requirement in the tracker</strong> — not a guarantee that the item isn't useful, needed for future quests, or accepted by a particular trader. Consider keeping valuable keys, gear, or special items. The community item list is broad but not every weapon, attachment, or modded item is documented.</div>
+    <p>Compares items against <strong>all four players' outstanding quests</strong> and <strong>unfinished Airdrop ISR crafting</strong>. Choose <strong>Keep</strong> or <strong>Sell</strong> on any row to override the automatic recommendation for your entire team.</p>
+    <div class="notice"><strong>Automatic</strong> follows current quests and crafting. Manual <strong>Keep</strong> and <strong>Sell</strong> decisions stay in place until someone returns the item to Automatic. Selling a currently required item shows a warning, but doesn't remove its quest/crafting requirement. These are item-planning labels, not actual inventory transactions. Future quests and special gear may still matter.</div>
     <p class="muted" id="sellSummary">Comparing current requirements…</p>
+    <p class="muted" id="sellOverrideStatus" role="status">Loading shared Keep/Sell choices…</p>
     <div class="sell-controls">
      <label>Show
       <select id="sellMode" class="full" aria-label="Sell guide status filter">
-       <option value="sell">Able to Sell — no current requirements</option>
-       <option value="keep">Keep — currently needed</option>
+       <option value="sell">Sell list (automatic + manual)</option>
+       <option value="keep">Keep list (automatic + manual)</option>
        <option value="all">All known items</option>
       </select>
      </label>
@@ -163,7 +167,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
      </label>
     </div>
     <p id="sellLookupResult" class="muted" role="status"></p>
-    <div class="overflow sell-results"><table><thead><tr><th>Item</th><th>Category</th><th>Recommendation</th><th>Needed for</th></tr></thead><tbody id="sellList"></tbody></table></div>
+    <div class="overflow sell-results"><table><thead><tr><th>Item</th><th>Category</th><th>Status</th><th>Move to</th><th>Needed for</th></tr></thead><tbody id="sellList"></tbody></table></div>
     <h3>Know another Unturnov item?</h3>
     <p class="muted">Add any missing game item to the shared catalog. It will automatically change from Able to Sell to Keep if a tracked quest or crafting recipe starts requiring it.</p>
     <div class="actions"><input id="sellAddName" placeholder="Exact item name" aria-label="Missing Unturnov item" style="flex:1;min-width:150px">
@@ -194,6 +198,6 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
  </div>
 </main>
 <script src="./sell-catalog.js?v=20261009-catalog1"></script>
-<script src="./core-v3.js?v=20261009-dakota-four"></script><script src="./tracker-v3.js?v=20261009-sell-guide2"></script>
+<script src="./core-v3.js?v=20261009-dakota-four"></script><script src="./tracker-v3.js?v=20261009-manual-keep-sell"></script>
 <script src="./airdrop-isr.js?v=20261009-sell-guide1"></script>
 </body></html>
