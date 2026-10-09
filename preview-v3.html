@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unturnov Quest Tracker · Shared Edition</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0c121c;color:#edf3fa}
+*{box-sizing:border-box}body{margin:0;font-size:15px}button,input,select,textarea{font:inherit}button{background:#203148;color:#edf3fa;border:1px solid #3a526e;padding:9px 13px;border-radius:9px;cursor:pointer}button:hover{background:#2c486a}button:disabled{opacity:.4;cursor:not-allowed}button.primary{background:#2869c1;border-color:#4384e0}button.primary:hover{background:#357fe4}button.danger{color:#ffb8bb;border-color:#8b4750}input,select,textarea{background:#0c1725;color:#eff7ff;border:1px solid #344c67;border-radius:8px;padding:10px;max-width:100%}input:focus,textarea:focus,select:focus{outline:2px solid #4788e1;outline-offset:1px}textarea{width:100%;min-height:115px;resize:vertical}label{display:block;margin:12px 0 8px;color:#c0d2e8}label input{display:block;width:100%;margin-top:5px}
+header{padding:20px clamp(15px,4vw,40px);background:#142238;border-bottom:1px solid #263b54}h1{font-size:26px;margin:0 0 5px}h2{font-size:21px;margin:0 0 8px}h3{font-size:17px;margin:18px 0 8px}p{color:#aec0d4;line-height:1.55;margin:6px 0 12px}small,.muted{font-size:12px;color:#9eb4cd}.warn{color:#ffb77f}.good{color:#76d6a5}.pending{color:#ffda87}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 12px}.tabs button{flex:1 1 170px;font-weight:700}.tabs button.active{background:#326fc1;border-color:#80b4fd}.cloud-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 12px;background:#0d1d2e;border:1px solid #304763;border-radius:10px}.cloud-row>*{margin:0}#accountLabel{font-weight:600}
+main{display:grid;grid-template-columns:minmax(225px,320px) minmax(0,1fr);gap:18px;max-width:1400px;margin:18px auto;padding:0 16px}.panel{border:1px solid #2b4058;background:#152236;border-radius:14px;padding:17px;min-width:0;margin-bottom:17px}.row{display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sidebar{min-width:0}.sidebar .panel{position:sticky;top:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}.actions>button{flex-shrink:0}.full{width:100%}
+.quest-list{display:flex;flex-direction:column;gap:6px;max-height:58vh;overflow:auto;margin-top:11px}.quest-row{display:flex;justify-content:space-between;gap:6px;align-items:center;text-align:left;width:100%}.quest-row.active{outline:2px solid #69a2fa}.quest-row span{min-width:0}.quest-row b{display:block;overflow:hidden;text-overflow:ellipsis}.quest-row small{display:block;margin-top:3px}.empty{padding:25px 0;text-align:center}.headline{display:flex;justify-content:space-between;gap:8px;align-items:start;flex-wrap:wrap}.goal-line{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #2d4055;padding:11px 0}.count-actions{display:flex;gap:9px;align-items:center;white-space:nowrap}.count-actions button{font-size:20px;padding:4px 12px}.count-actions strong{font-variant-numeric:tabular-nums;min-width:45px;text-align:center}.edit-goal{display:grid;grid-template-columns:minmax(0,1fr) 80px 105px 40px;gap:7px;margin:8px 0}.edit-goal input{width:100%;min-width:0}.edit-goal select{min-width:0;width:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 7px;text-align:left;border-bottom:1px solid #2a3d52;vertical-align:top}th:nth-child(2),td:nth-child(2){text-align:right;font-variant-numeric:tabular-nums;font-weight:700}.overflow{overflow:auto}
+details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}details label{font-size:13px}#syncState{font-weight:700}.notice{padding:12px;border-radius:9px;background:#1d3248;color:#c1d8f1;font-size:13px;line-height:1.6}input[type=file]{max-width:100%}#pendingCount{font-weight:700}
+@media(max-width:740px){main{grid-template-columns:1fr}.sidebar .panel{position:static}.quest-list{max-height:260px}.edit-goal{grid-template-columns:minmax(0,1fr) 72px}.edit-goal select{grid-column:1}.edit-goal button{grid-column:2}.goal-line{align-items:start}}
+</style>
+</head>
+<body>
+<header>
+ <h1>🎒 Unturnov Quest Tracker</h1><p>Shared quests for Nolan, Tyler, and Kalob</p>
+ <nav id="tabs" class="tabs" aria-label="Player quests"></nav>
+ <div class="cloud-row"><span id="syncState">Loading…</span><span class="muted" id="lastSynced">Last cloud sync: Never</span><span class="muted">Pending updates: <b id="pendingCount">0</b></span><button data-action="sync">↻ Sync</button><button data-action="undo">Undo last change</button></div>
+</header>
+<main>
+ <aside class="sidebar">
+ <section class="panel">
+  <div class="row"><h2>Quests</h2><button class="primary" data-action="add-quest">+ Add quest</button></div>
+  <p id="questStats" class="muted"></p>
+  <input class="full" id="search" placeholder="Search quests or items" aria-label="Search quests">
+  <label>Show<select id="filterSelect" class="full"><option value="active">Active quests</option><option value="completed">Completed quests</option><option value="all">All quests</option><option value="deleted">Recently deleted</option></select></label>
+  <div id="questList" class="quest-list"></div>
+ </section>
+ <section class="panel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p>
+  <details><summary>Sign in / sign out</summary><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Your approved email"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Account password"></label><div class="actions"><button class="primary" data-action="login">Sign in</button><button data-action="logout">Sign out</button></div></details>
+  <details><summary>Connection settings (advanced)</summary><p class="muted">Use the same Supabase project on every computer. Never enter a secret or service-role key.</p><label>Project URL<input id="projectUrl" placeholder="https://...supabase.co"></label><label>Publishable key<input id="publicKey" placeholder="sb_publishable_..."></label><button data-action="save-config">Save connection</button></details>
+  <details><summary>Backups & restore</summary><p class="muted">Downloads all three players' quests and the saved change history. Keep the backup somewhere safe.</p><button data-action="export">Download full backup</button><label>Restore from backup<input id="backupFile" type="file" accept=".json,application/json"></label></details>
+ </section>
+ </aside>
+ <div>
+  <section class="panel" id="questDetail"></section>
+  <section class="panel"><h2>🧰 Team loot list</h2><p class="muted">Remaining items across unfinished quests for all three players. Each Bundle of Dogtags is counted as 10 individual Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Total</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div></section>
+  <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
+ </div>
+</main>
+<script src="./core-v3.js"></script><script src="./tracker-v3.js"></script>
+</body></html>
