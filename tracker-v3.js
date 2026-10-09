@@ -12,6 +12,7 @@
  let eventIds=new Set(remote.map(e=>e.event_id)), maxSeq=Math.max(0,...remote.map(e=>Number(e.seq)||0));
  function persist(){try{localStorage.setItem(store.events,JSON.stringify(remote));localStorage.setItem(store.pending,JSON.stringify(pending))}catch(e){serverError='Browser storage is full. Download a backup immediately.'}}
  function rebuild(){model=globalThis.unturnovReduce(remote.concat(pending.map((e,i)=>({...e,seq:null,local_order:i+1}))))}
+ function isViewer(){return String(session?.email||'').toLowerCase()==='yoshiseggs911@gmail.com'}
  function current(){return model[profile]||[]}
  function complete(q){return Array.isArray(q.goals)&&q.goals.every(g=>g.count>=g.total)}
  function questProgress(q){
@@ -45,7 +46,7 @@
  function timeText(t){return t?new Date(t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'}):'Never'}
  function ready(){return !!(conf?.url&&conf?.key&&session?.access_token)}
  function renderStatus(){const state=$('syncState');if(!state)return;let msg=serverError?'⚠ '+serverError:(!conf?'Not configured — local draft only':!session?.access_token?'Signed out — local edits queued':pending.length?pending.length+' change(s) waiting to upload':activeSync?'Checking cloud…':'Cloud synchronized');
- state.textContent=msg;state.className=serverError?'warn':pending.length?'pending':ready()?'good':'muted';$('lastSynced').textContent='Last cloud sync: '+timeText(lastSync);$('pendingCount').textContent=String(pending.length);$('accountLabel').textContent=authEmail||'Not signed in';
+ state.textContent=msg;state.className=serverError?'warn':pending.length?'pending':ready()?'good':'muted';$('lastSynced').textContent='Last cloud sync: '+timeText(lastSync);$('pendingCount').textContent=String(pending.length);$('accountLabel').textContent=(authEmail||'Not signed in')+(isViewer()?' · View-only':'');
  }
  function renderTabs(){document.querySelectorAll('[data-player]').forEach(btn=>btn.classList.toggle('active',btn.dataset.player===profile))}
  function renderList(){
@@ -117,8 +118,8 @@
    }
   }
  }
- function render(){rebuild();renderTabs();autoSelect();renderList();renderDetail();renderPersonal();renderTeam();renderStatus()}
- function emit(kind,qid,payload,reverse=null){const event={event_id:crypto.randomUUID(),player:profile,quest_id:qid,kind,payload,local_order:Date.now()+editCounter++};pending.push(event);if(reverse)undoStack.push({player:profile,qid,...reverse});persist();render();void sync();return event}
+ function render(){rebuild();renderTabs();autoSelect();renderList();renderDetail();renderPersonal();renderTeam();renderStatus();const add=document.querySelector('[data-action="add-quest"]');if(add)add.disabled=isViewer();}
+ function emit(kind,qid,payload,reverse=null){if(isViewer()){alert('Viewer accounts can read progress, but cannot edit it.');return null}const event={event_id:crypto.randomUUID(),player:profile,quest_id:qid,kind,payload,local_order:Date.now()+editCounter++};pending.push(event);if(reverse)undoStack.push({player:profile,qid,...reverse});persist();render();void sync();return event}
  function confirmEditorSwitch(){if(!edit)return true;if(!confirm('Discard unfinished quest changes?'))return false;edit=null;sessionStorage.removeItem(store.draft);return true}
  function showEditor(q){edit={id:q?.id||null,title:q?.title||'',trader:q?.trader||'',reward:q?.reward??1,goals:q?.goals?.map(g=>({...g}))||[{id:crypto.randomUUID(),name:'',total:1,type:'item',count:0}]};saveDraft();renderEditor()}
  function saveDraft(){if(edit)sessionStorage.setItem(store.draft,JSON.stringify({profile,draft:edit}))}
@@ -138,17 +139,38 @@
  function undoLast(){const last=undoStack.pop();if(!last){alert('No recent change to undo in this session.');return}const prev=profile;profile=last.player;emit(last.kind,last.qid,last.payload);profile=prev;render()}
  function download(filename,body){const b=new Blob([JSON.stringify(body,null,2)],{type:'application/json'}),a=document.createElement('a'),url=URL.createObjectURL(b);a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)}
  function exportBackup(){download('unturnov-backup-'+new Date().toISOString().slice(0,10)+'.json',{app:'Unturnov',version:3,exported:new Date().toISOString(),profiles:model,events:remote,pending});}
- async function importBackup(input){const file=input.files?.[0];if(!file)return;try{const d=JSON.parse(await file.text());const profiles=d.profiles||(d.quests?{[profile]:d.quests}:null);if(!profiles||!confirm('Restore quest data from this file by appending updates to shared history? Existing quests with matching IDs will be updated.'))return;for(const player of players){if(!Array.isArray(profiles[player]))continue;const previous=profile;profile=player;const existing=new Map(current().map(q=>[q.id,q]));for(const q of profiles[player]){if(!q.id||!Array.isArray(q.goals))continue;if(existing.has(q.id)){emit('quest_edited',q.id,{title:q.title,trader:q.trader,reward:q.reward,goals:q.goals});for(const g of q.goals)emit('goal_set',q.id,{goal_id:g.id,count:g.count});emit('quest_note',q.id,{notes:q.notes||''});emit('quest_pinned',q.id,{pinned:!!q.pinned});if(q.deleted)emit('quest_deleted',q.id,{})}else emit('quest_created',q.id,{quest:q})}profile=previous}render();alert('Backup queued. Watch the sync status until pending changes reach zero.')}catch(e){alert('Could not load backup: '+e.message)}finally{input.value=''}}
+ async function importBackup(input){if(isViewer()){alert('Read-only account: restoring backups is not permitted.');input.value='';return}const file=input.files?.[0];if(!file)return;try{const d=JSON.parse(await file.text());const profiles=d.profiles||(d.quests?{[profile]:d.quests}:null);if(!profiles||!confirm('Restore quest data from this file by appending updates to shared history? Existing quests with matching IDs will be updated.'))return;for(const player of players){if(!Array.isArray(profiles[player]))continue;const previous=profile;profile=player;const existing=new Map(current().map(q=>[q.id,q]));for(const q of profiles[player]){if(!q.id||!Array.isArray(q.goals))continue;if(existing.has(q.id)){emit('quest_edited',q.id,{title:q.title,trader:q.trader,reward:q.reward,goals:q.goals});for(const g of q.goals)emit('goal_set',q.id,{goal_id:g.id,count:g.count});emit('quest_note',q.id,{notes:q.notes||''});emit('quest_pinned',q.id,{pinned:!!q.pinned});if(q.deleted)emit('quest_deleted',q.id,{})}else emit('quest_created',q.id,{quest:q})}profile=previous}render();alert('Backup queued. Watch the sync status until pending changes reach zero.')}catch(e){alert('Could not load backup: '+e.message)}finally{input.value=''}}
  async function api(path,method='GET',body=null,prefer=''){const headers={'apikey':conf.key,'Authorization':'Bearer '+(session?.access_token||conf.key)};if(body!==null){headers['Content-Type']='application/json';if(prefer)headers['Prefer']=prefer}return fetch(conf.url.replace(/\/$/,'')+path,{method,headers,...(body!==null?{body:JSON.stringify(body)}:{})})}
  async function refreshAuth(){if(!session?.refresh_token)return false;if(Date.now()<Number(session.expires_at||0)-60000)return true;try{const r=await fetch(conf.url.replace(/\/$/,'')+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:conf.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});if(!r.ok)throw Error('Please sign in again');const d=await r.json();session={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+d.expires_in*1000,email:d.user?.email||authEmail};authEmail=session.email||'';localStorage.setItem(store.session,JSON.stringify(session));return true}catch(e){serverError=String(e.message);renderStatus();return false}}
- async function login(){const email=$('loginEmail').value.trim(),password=$('loginPassword').value;if(!conf?.url||!conf?.key){alert('Enter your Supabase project settings under Connection first.');return}if(!email||!password){alert('Enter email and password.');return}try{const r=await fetch(conf.url.replace(/\/$/,'')+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:conf.key,'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok)throw Error('Sign-in failed ('+r.status+'). Check your approved account and password.');const d=await r.json();session={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+d.expires_in*1000,email:d.user?.email||email};authEmail=session.email;localStorage.setItem(store.session,JSON.stringify(session));$('loginPassword').value='';serverError='';renderStatus();await sync()}catch(e){serverError=e.message;renderStatus()}}
- function logout(){if(!confirm('Sign out? Unsynced changes remain queued on this browser.'))return;session=null;authEmail='';localStorage.removeItem(store.session);renderStatus()}
+ async function login(){const email=$('loginEmail').value.trim(),password=$('loginPassword').value;if(!conf?.url||!conf?.key){alert('Enter your Supabase project settings under Connection first.');return}if(!email||!password){alert('Enter email and password.');return}try{const r=await fetch(conf.url.replace(/\/$/,'')+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:conf.key,'Content-Type':'application/json'},body:JSON.stringify({email,password})});if(!r.ok)throw Error('Sign-in failed ('+r.status+'). Check your approved account and password.');const d=await r.json();session={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+d.expires_in*1000,email:d.user?.email||email};authEmail=session.email;localStorage.setItem(store.session,JSON.stringify(session));$('loginPassword').value='';serverError='';render();await sync()}catch(e){serverError=e.message;renderStatus()}}
+ async function signup(){
+  const email=$('loginEmail').value.trim(),password=$('loginPassword').value;
+  if(!conf?.url||!conf?.key){alert('Enter your Supabase project settings under Connection first.');return}
+  if(!email||!password){alert('Enter email and a password to create an account.');return}
+  if(!confirm('Create a Supabase login for '+email+'? Only accounts approved by the project owner can see shared progress.'))return;
+  try{
+   const response=await fetch(conf.url.replace(/\/$/,'')+'/auth/v1/signup',{
+    method:'POST',headers:{apikey:conf.key,'Content-Type':'application/json'},
+    body:JSON.stringify({email,password})
+   });
+   if(!response.ok){const details=await response.json().catch(()=>({}));throw Error(details.msg||details.message||('Sign-up failed ('+response.status+').'))}
+   const d=await response.json();
+   $('loginPassword').value='';
+   if(d.session?.access_token){
+    session={access_token:d.session.access_token,refresh_token:d.session.refresh_token,expires_at:Date.now()+d.session.expires_in*1000,email};
+    authEmail=email;localStorage.setItem(store.session,JSON.stringify(session));render();await sync();
+    alert('Account created and signed in.');
+   }else alert('Account registration requested. Check your email for a confirmation link, then sign in here.');
+  }catch(err){alert(String(err.message||err))}
+ }
+ function logout(){if(!confirm('Sign out? Unsynced changes remain queued on this browser.'))return;session=null;authEmail='';localStorage.removeItem(store.session);render()}
  function saveConnection(){const url=$('projectUrl').value.trim().replace(/\/$/,''),key=$('publicKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)||!(key.startsWith('sb_publishable_')||key.startsWith('eyJ'))){alert('Enter a Supabase Project URL and publishable (or legacy anon) key. Never use a secret key.');return}conf={url,key};localStorage.setItem(store.cfg,JSON.stringify(conf));serverError='';renderStatus();}
  async function fetchDeltas(){let loops=0;while(loops++<100){const path='/rest/v1/quest_events?seq=gt.'+maxSeq+'&select=seq,event_id,player,quest_id,kind,payload&order=seq.asc&limit=500';const r=await api(path);if(!r.ok){const m=await r.text();throw Error(r.status===404?'Run the v3 Supabase database migration first.':('Cloud read error '+r.status+': '+m.slice(0,120)))}const rows=await r.json();if(!Array.isArray(rows))throw Error('Unexpected cloud response');for(const x of rows){if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}maxSeq=Math.max(maxSeq,Number(x.seq)||0)}if(rows.length<500)break}}
  async function uploadPending(){while(pending.length){const e=pending[0];const row={event_id:e.event_id,player:e.player,quest_id:e.quest_id,kind:e.kind,payload:e.payload};const r=await api('/rest/v1/quest_events?on_conflict=event_id','POST',[row],'resolution=ignore-duplicates,return=representation');if(!r.ok){let msg=await r.text();throw Error('Cloud write error '+r.status+': '+msg.slice(0,120))}const inserted=await r.json();if(inserted?.[0]){const x=inserted[0];if(!eventIds.has(x.event_id)){remote.push(x);eventIds.add(x.event_id)}/* Do not advance fetched cursor here: earlier concurrent writes may still be unseen. */}pending.shift();persist();renderStatus()}}
  async function sync(){if(activeSync||!ready())return;activeSync=true;serverError='';renderStatus();try{if(!await refreshAuth())return;await fetchDeltas();await uploadPending();await fetchDeltas();persist();lastSync=Date.now();localStorage.setItem('unturnov-v3-last-sync',String(lastSync));render()}catch(e){serverError=e.message;renderStatus()}finally{activeSync=false;renderStatus()}}
  function handleClick(event){const btn=event.target.closest('button');if(!btn)return;
  const action=btn.dataset.action, id=btn.dataset.id,goal=btn.dataset.goal;const q=current().find(q=>q.id===id);
+ if(isViewer()&&['add-quest','edit','delta','complete','reset','pin','delete','restore','save-notes','undo'].includes(action)){alert('This account has view-only access.');return}
  if(btn.dataset.player){changePlayer(btn.dataset.player);return}
  if(action==='select'){if(edit&&!confirmEditorSwitch())return;selected=id;noteEditing=false;render();return}
  if(action==='add-quest'){if(!confirmEditorSwitch())return;showEditor();return}
@@ -166,6 +188,7 @@
  if(action==='undo'){undoLast();return}
  if(action==='export'){exportBackup();return}
  if(action==='login'){void login();return}
+ if(action==='signup'){void signup();return}
  if(action==='logout'){logout();return}
  if(action==='save-config'){saveConnection();return}
  if(action==='sync'){void sync();return}
