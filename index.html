@@ -37,10 +37,12 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
  </aside>
  <div>
   <section class="panel" id="questDetail"></section>
-  <section class="panel"><h2 id="personalLootTitle">🎒 Personal Loot List</h2><p class="muted">Items still needed for this player's unfinished quests. Quantities combine duplicate items across quests. Each Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLoot"></tbody></table></div></section>
+  <section class="panel" id="personal-nolan"><h2>🎒 Nolan’s Personal Loot List</h2><p class="muted">Remaining items for Nolan's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootNolan"></tbody></table></div></section>
+  <section class="panel" id="personal-tyler"><h2>🎒 Tyler’s Personal Loot List</h2><p class="muted">Remaining items for Tyler's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootTyler"></tbody></table></div></section>
+  <section class="panel" id="personal-kalob"><h2>🎒 Kalob’s Personal Loot List</h2><p class="muted">Remaining items for Kalob's unfinished quests. Duplicate items are combined, and one Bundle of Dogtags counts as 10 Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootKalob"></tbody></table></div></section>
   <section class="panel"><h2>🧰 Team loot list</h2><p class="muted">Remaining items across unfinished quests for all three players. Each Bundle of Dogtags is counted as 10 individual Dogtags.</p><div class="overflow"><table><thead><tr><th>Item</th><th>Total</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div></section>
   <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
  </div>
 </main>
-<script src="./core-v3.js"></script><script src="./tracker-v3.js"></script>
+<script src="./core-v3.js"></script><script src="./tracker-v3.js?v=20261009-personal3"></script>
 </body></html>
