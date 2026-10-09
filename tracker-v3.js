@@ -65,9 +65,10 @@
  return [...items.values()].sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
  }
  function renderPersonal(){
- $('personalLootTitle').textContent='🎒 '+profile+'’s Personal Loot List';
- const list=personalLoot(profile);
- $('personalLoot').innerHTML=list.length?list.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.total}</td><td>${[...x.quests].map(([name,n])=>esc(name)+' ('+n+')').join(' · ')}</td></tr>`).join(''):'<tr><td colspan="3" class="muted">No remaining items for this player’s active quests.</td></tr>';
+ for(const player of players){
+  const list=personalLoot(player);
+  $('personalLoot'+player).innerHTML=list.length?list.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.total}</td><td>${[...x.quests].map(([name,n])=>esc(name)+' ('+n+')').join(' · ')}</td></tr>`).join(''):'<tr><td colspan="3" class="muted">No remaining items for '+player+'’s unfinished quests.</td></tr>';
+ }
  }
  function render(){rebuild();renderTabs();autoSelect();renderList();renderDetail();renderPersonal();renderTeam();renderStatus()}
  function emit(kind,qid,payload,reverse=null){const event={event_id:crypto.randomUUID(),player:profile,quest_id:qid,kind,payload,local_order:Date.now()+editCounter++};pending.push(event);if(reverse)undoStack.push({player:profile,qid,...reverse});persist();render();void sync();return event}
