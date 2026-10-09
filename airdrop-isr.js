@@ -119,7 +119,7 @@
   $('airdropStageTotal').textContent=stagesDone+' / 3';
   $('airdropFinalStatus').textContent=model.stages.airdrop?'✓ Crafted':'Not crafted';
   $('airdropProgress').value=got;$('airdropProgress').max=sum;
-  const focused=document.activeElement?.closest?.('#airdropMaterials');
+  const focused=document.activeElement?.matches?.('input[data-airdrop-quantity]');
   if(!focused){
    $('airdropMaterials').innerHTML=requirements.map(req=>{
     const n=model.materials[req.key];
@@ -206,6 +206,7 @@
   const node=$('airdropSection');if(!node)return;
   node.addEventListener('click',onClick);
   node.addEventListener('change',onChange);
+  node.addEventListener('focusout',e=>{if(e.target.matches?.('input[data-airdrop-quantity]'))requestAnimationFrame(()=>render())});
   window.addEventListener('focus',()=>void sync());
   window.addEventListener('online',()=>void sync());
   // The quest tracker handles refreshing the Supabase sign-in. Read its current
