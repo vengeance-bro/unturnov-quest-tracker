@@ -113,7 +113,7 @@
   const heading=index===3?'Final Assembly':index===0?'1 · Globe':index===1?'2 · Frame':'3 · Support';
   const rows=refs.map(({name,qty,req})=>{
    const count=model.materials[req.key];
-   return `<tr><td>${esc(name)}${consumedToolNames.has(name)?' <small>(consumed)</small>':''}</td><td>${qty}</td><td>
+   return `<tr><td>${esc(name)}</td><td>${qty}</td><td>
     <div class="airdrop-counter">
      <button type="button" data-airdrop-action="delta" data-key="${req.key}" data-delta="-1" aria-label="Remove one ${esc(name)} from ${esc(recipe.name)}" ${count===0?'disabled':''}>−</button>
      <input type="number" inputmode="numeric" min="0" max="${qty}" step="1" data-airdrop-quantity="${req.key}" value="${count}" aria-label="${esc(recipe.name)} ${esc(name)} collected">
