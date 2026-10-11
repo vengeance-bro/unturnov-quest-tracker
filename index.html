@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Unturnov Quest Tracker · Shared Edition</title>
+<title>Unturnov Tactical · Team Mission Control</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0c121c;color:#edf3fa}
 *{box-sizing:border-box}body{margin:0;font-size:15px}button,input,select,textarea{font:inherit}button{background:#203148;color:#edf3fa;border:1px solid #3a526e;padding:9px 13px;border-radius:9px;cursor:pointer}button:hover{background:#2c486a}button:disabled{opacity:.4;cursor:not-allowed}button.primary{background:#2869c1;border-color:#4384e0}button.primary:hover{background:#357fe4}button.danger{color:#ffb8bb;border-color:#8b4750}input,select,textarea{background:#0c1725;color:#eff7ff;border:1px solid #344c67;border-radius:8px;padding:10px;max-width:100%}input:focus,textarea:focus,select:focus{outline:2px solid #4788e1;outline-offset:1px}textarea{width:100%;min-height:115px;resize:vertical}label{display:block;margin:12px 0 8px;color:#c0d2e8}label input{display:block;width:100%;margin-top:5px}
@@ -73,18 +73,46 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
 #sellLookupResult:empty{display:none}
 @media(max-width:740px){.sell-controls{grid-template-columns:1fr}.sell-results{max-height:420px}}
 </style>
+<link rel="stylesheet" href="./tactical.css?v=20261011-preview">
+<style>
+body:not(.auth-evaluated) main{visibility:hidden}
+body.auth-locked #authGate #accountPanel{display:block!important}
+body.auth-locked #settingsLogout{display:none!important}
+.tactical-dialog{background:#112230;border:1px solid #526b7f;color:#f0f4f6;border-radius:14px;padding:22px;width:min(520px,94vw)}
+.tactical-dialog::backdrop{background:#050c14dd}
+.tactical-dialog h3{color:#efc48e}
+.tactical-toast{position:fixed;bottom:18px;right:18px;z-index:90;padding:12px 17px;background:#243d39;color:#ccf5df;border:1px solid #5f967d;border-radius:9px;box-shadow:0 6px 26px #000a;max-width:350px}
+.tactical-toast.error{background:#442631;color:#ffccd0;border-color:#c06e75}
+</style>
 </head>
-<body>
-<header>
- <h1>🎒 Unturnov Quest Tracker</h1><p>Shared quests for Nolan, Tyler, Kalob, and Dakota</p>
- <nav id="tabs" class="tabs" aria-label="Player quests"></nav>
- <a class="airdrop-link" href="#airdropSection">🛰️ Airdrop ISR crafting tracker ↓</a>
- <a class="airdrop-link" href="#sellSection">💰 Able to Sell ↓</a>
+<body class="auth-locked" data-view="dashboard">
+<header id="siteHeader">
+ <div class="topline"><div class="brandline"><div class="brandmark" aria-hidden="true">⌖</div><div>
+  <span class="edition">TACTICAL OPERATIONS / SHARED PROGRESS</span>
+  <h1>UNTURNOV TRACKER</h1>
+  <p>Team mission control · Nolan · Tyler · Kalob · Dakota</p>
+ </div></div>
+ <div class="top-actions"><span id="tacticalAuthStatus" class="edition">TEAM ACCESS</span><span id="tacticalAccount" class="account-pill">Connecting</span><button type="button" id="quickLogout" data-action="logout">Sign out</button></div></div>
+ <nav id="mainNav" aria-label="Main website navigation">
+  <button type="button" data-view="dashboard">◈ &nbsp;Overview</button>
+  <button type="button" data-view="quests">☷ &nbsp;Quests</button>
+  <button type="button" data-view="team">▣ &nbsp;Team Loot</button>
+  <button type="button" data-view="airdrop">◎ &nbsp;Airdrop ISR</button>
+  <button type="button" data-view="sell">↔ &nbsp;Keep / Sell</button>
+  <button type="button" data-view="activity">◷ &nbsp;Activity</button>
+  <button type="button" data-view="settings">⚙ &nbsp;Settings</button>
+ </nav>
  <div class="cloud-row"><span id="syncState">Loading…</span><span class="muted" id="lastSynced">Last cloud sync: Never</span><span class="muted">Pending updates: <b id="pendingCount">0</b></span><button data-action="sync">↻ Sync</button><button data-action="undo">Undo last change</button></div>
 </header>
-<main>
+<section id="authGate"><div class="auth-gate-card"><div class="brandmark" aria-hidden="true" style="margin:0 auto">⌖</div>
+ <h2>Private team workspace</h2>
+ <p>Sign in with an approved account to access shared quests, crafting, item photos, and Keep / Sell decisions.</p>
+ <div id="authPanelMount"></div>
+ </div></section>
+<main id="appMain">
  <aside class="sidebar">
- <section class="panel">
+ <section class="panel" id="questSidebarPanel">
+  <nav id="tabs" class="tabs" aria-label="Player quests"></nav>
   <div class="row"><h2>Quests</h2><button class="primary" data-action="add-quest">+ Add quest</button></div>
   <p id="questStats" class="muted"></p>
   <input class="full" id="search" placeholder="Search quests or items" aria-label="Search quests">
@@ -101,15 +129,29 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
   </select></label>
   <div id="questList" class="quest-list"></div>
  </section>
- <section class="panel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p>
+ <div id="accountSidebarMount"><section class="panel" id="accountPanel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p><div class="actions"><button id="settingsLogout" type="button" data-action="logout">Sign out of this device</button></div>
   <details><summary>Sign in / create account / sign out</summary><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Your approved email"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Account password"></label><div class="actions"><button class="primary" data-action="login">Sign in</button><button data-action="signup">Create account</button><button data-action="logout">Sign out</button></div></details>
   <details><summary>Connection settings (advanced)</summary><p class="muted">Use the same Supabase project on every computer. Never enter a secret or service-role key.</p><label>Project URL<input id="projectUrl" placeholder="https://...supabase.co"></label><label>Publishable key<input id="publicKey" placeholder="sb_publishable_..."></label><button data-action="save-config">Save connection</button></details>
-  <details><summary>Backups & restore</summary><p class="muted">Downloads all three players' quests and the saved change history. Keep the backup somewhere safe.</p><button data-action="export">Download full backup</button><label>Restore from backup<input id="backupFile" type="file" accept=".json,application/json"></label></details>
- </section>
+  <details><summary>Backups & restore</summary><p class="muted">Download the full team snapshot: all four players' quests, Airdrop ISR progress, Keep/Sell choices, custom items, and image references. Original image files remain in cloud storage and are not embedded in JSON backups.</p><button data-action="export" class="primary">Download unified full backup</button><label>Restore from a full backup<input id="backupFile" type="file" accept=".json,application/json"></label><p class="muted">Restoring appends new events to shared history and needs two confirmations. Make a current backup first.</p></details>
+ </section></div>
  </aside>
- <div>
+ <div id="mainWorkspace">
+  <section class="panel" id="dashboardView" aria-label="Team overview">
+   <p class="dashboard-kicker">Operational status / Team overview</p>
+   <h2 class="dashboard-lead">Everything your squad needs. One place.</h2>
+   <p class="dashboard-intro">Shared quest progress, item requirements and crafting readiness. Every player has an independent quest log.</p>
+   <div class="dashboard-stats" id="dashboardStats"></div>
+   <h3>Squad progression</h3>
+   <div class="dashboard-players" id="dashboardPlayers"></div>
+   <div class="dashboard-shortcuts">
+    <button type="button" data-go-view="quests">☷ &nbsp; View quests</button>
+    <button type="button" data-go-view="sell">↔ &nbsp; Keep / Sell guide</button>
+    <button type="button" data-go-view="airdrop">◎ &nbsp; Craft Airdrop ISR</button>
+   </div>
+   <p id="dashboardUpdated" class="muted" style="margin-top:18px"></p>
+  </section>
   <section class="panel" id="questDetail"></section>
-  <section class="panel" id="personal-nolan" hidden>
+  <section class="panel personal-loot-panel" id="personal-nolan" hidden>
     <h2>🎒 Nolan’s Personal Loot List</h2>
     <p class="muted">Remaining items and actions for Nolan's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
     <h3 class="loot-section-heading">📦 Items to collect</h3>
@@ -117,7 +159,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     <h3 class="loot-section-heading">✅ Actions to complete</h3>
     <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsNolan"></tbody></table></div>
    </section>
-  <section class="panel" id="personal-tyler" hidden>
+  <section class="panel personal-loot-panel" id="personal-tyler" hidden>
     <h2>🎒 Tyler’s Personal Loot List</h2>
     <p class="muted">Remaining items and actions for Tyler's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
     <h3 class="loot-section-heading">📦 Items to collect</h3>
@@ -125,7 +167,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     <h3 class="loot-section-heading">✅ Actions to complete</h3>
     <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsTyler"></tbody></table></div>
    </section>
-  <section class="panel" id="personal-kalob" hidden>
+  <section class="panel personal-loot-panel" id="personal-kalob" hidden>
     <h2>🎒 Kalob’s Personal Loot List</h2>
     <p class="muted">Remaining items and actions for Kalob's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
     <h3 class="loot-section-heading">📦 Items to collect</h3>
@@ -133,7 +175,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     <h3 class="loot-section-heading">✅ Actions to complete</h3>
     <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsKalob"></tbody></table></div>
    </section>
-  <section class="panel" id="personal-dakota" hidden>
+  <section class="panel personal-loot-panel" id="personal-dakota" hidden>
     <h2>🎒 Dakota’s Personal Loot List</h2>
     <p class="muted">Remaining items and actions for Dakota's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
     <h3 class="loot-section-heading">📦 Items to collect</h3>
@@ -141,7 +183,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     <h3 class="loot-section-heading">✅ Actions to complete</h3>
     <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsDakota"></tbody></table></div>
    </section>
-  <section class="panel"><h2>🧰 Team Loot List</h2>
+  <section class="panel" id="teamSection"><p class="dashboard-kicker">Squad resources</p><h2>▣ Team Loot List</h2>
     <p class="muted">Remaining items and actions across Nolan, Tyler, Kalob and Dakota. One Bundle of Dogtags counts as 10 individual Dogtags.</p>
     <h3 class="loot-section-heading">📦 Items to collect</h3>
     <div class="overflow"><table><thead><tr><th>Item</th><th>Total needed</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div>
@@ -168,6 +210,16 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
     </div>
     <p id="sellLookupResult" class="muted" role="status"></p>
     <div class="overflow sell-results"><table><thead><tr><th>Item</th><th>Category</th><th>Status</th><th>Move to</th><th>Needed for</th></tr></thead><tbody id="sellList"></tbody></table></div>
+    <details class="image-edit-panel" id="iconLibraryPanel">
+     <summary>▧ Genuine item images / bulk importer</summary>
+     <p class="muted">Real in-game item icons appear beside their item names in Keep / Sell, Team Loot and Airdrop ISR. Items without a verified image show a placeholder, never a guessed picture.</p>
+     <p class="muted">In Unturned, use the Workshop's item-icon export tools to generate icons for installed assets. Select the exported PNG/JPG/WEBP files below. The importer matches <strong>exact item names only</strong> and skips everything uncertain.</p>
+     <div class="actions" style="align-items:center">
+      <input id="iconBulkFiles" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple aria-label="Choose exported game item icon files" style="flex:1">
+      <button type="button" class="primary" id="iconBulkUpload">Import matching icons</button>
+     </div>
+     <p class="muted" id="iconBulkStatus" role="status">No import in progress.</p>
+    </details>
     <h3>Know another Unturnov item?</h3>
     <p class="muted">Add any missing game item to the shared catalog. It will automatically change from Able to Sell to Keep if a tracked quest or crafting recipe starts requiring it.</p>
     <div class="actions"><input id="sellAddName" placeholder="Exact item name" aria-label="Missing Unturnov item" style="flex:1;min-width:150px">
@@ -194,10 +246,27 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
    <div id="airdropStages" class="airdrop-sections"></div>
    <p class="muted"><span id="airdropSyncStatus">Checking shared crafting progress…</span> · <span id="airdropLastSynced">Last sync: Not yet</span></p>
   </details>
-  <section class="panel"><h3>Save protection</h3><div class="notice">Quest changes are stored in an append-only online history. Updates queue offline and retry when connected. Recently deleted quests can be restored. If two people change the same item, count adjustments are replayed individually. If the database has not been upgraded to v3 yet, keep using the original tracker until the migration is complete.</div></section>
+  <section class="panel" id="activitySection">
+   <p class="dashboard-kicker">Transparency / Recent updates</p>
+   <div class="row"><div><h2>Team Activity</h2><p class="muted">Recent quest, crafting and Keep/Sell changes. Author names are shown when they can be verified.</p></div>
+    <select id="activityScope" aria-label="Activity type"><option value="all">All changes</option><option value="quest">Quests</option><option value="craft">Airdrop ISR</option><option value="sell">Keep / Sell</option></select>
+   </div>
+   <div id="activityList" aria-live="polite"><p class="muted">Loading recent updates…</p></div>
+  </section>
+  <section class="panel" id="saveProtection"><h3>Save protection</h3><div class="notice">Private team accounts, append-only quest/crafting histories, a separate protected recovery snapshot, and queued offline updates. When signing out, all pending changes must synchronize before cached game data is cleared. For a downloadable recovery point, use Settings → Unified Backup.</div></section>
  </div>
-</main>
-<script src="./sell-catalog.js?v=20261009-catalog1"></script>
-<script src="./core-v3.js?v=20261009-dakota-four"></script><script src="./tracker-v3.js?v=20261009-sell-label-clean"></script>
-<script src="./airdrop-isr.js?v=20261009-sell-guide1"></script>
+</main><dialog id="itemImageDialog" class="tactical-dialog">
+ <h3 id="itemImageTitle">Real game item icon</h3>
+ <p>Upload only a matching Unturnov inventory icon. False matches make the Keep / Sell list less useful for everyone.</p>
+ <label>Image file<input id="itemImageFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
+ <p class="muted" id="itemImageStatus"></p>
+ <div class="actions"><button id="itemImageUpload" class="primary" type="button">Upload verified icon</button><button id="itemImageCancel" type="button">Cancel</button></div>
+</dialog>
+<div id="tacticalToast" class="tactical-toast" role="status" aria-live="polite" hidden></div>
+
+<script src="./sell-catalog.js?v=20261011-tactical"></script>
+<script src="./core-v3.js?v=20261011-tactical"></script>
+<script src="./tracker-tactical.js?v=20261011-preview"></script>
+<script src="./airdrop-tactical.js?v=20261011-preview"></script>
+<script src="./tactical-enhancements.js?v=20261011-bulk-icons-2"></script>
 </body></html>
