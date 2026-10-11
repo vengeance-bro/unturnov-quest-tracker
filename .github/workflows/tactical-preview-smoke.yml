@@ -1,0 +1,34 @@
+name: Tactical preview smoke tests
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'preview-tactical.html'
+      - 'tactical.css'
+      - 'tactical-enhancements.js'
+      - 'tracker-tactical.js'
+      - 'airdrop-tactical.js'
+      - 'tests/tactical-ui.spec.cjs'
+      - '.github/workflows/tactical-preview-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test@1.56.1
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Test signed-out gate, navigation, mobile and logout
+        run: npx playwright test tests/tactical-ui.spec.cjs --reporter=line --workers=1
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: unturnov-tactical-ui-errors
+          path: test-results/
