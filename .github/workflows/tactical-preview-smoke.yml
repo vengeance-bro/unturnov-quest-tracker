@@ -25,6 +25,15 @@ jobs:
         run: npm install --no-save @playwright/test@1.56.1
       - name: Install browser
         run: npx playwright install --with-deps chromium
+      - name: Wait for latest preview deployment
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsSL 'https://vengeance-bro.github.io/unturnov-quest-tracker/preview-tactical.html?ci='"${{ github.sha }}" | grep -q 'id="quickLogout"'; then
+              echo "Preview is deployed"; exit 0
+            fi
+            echo "Waiting for GitHub Pages preview..."; sleep 5
+          done
+          exit 1
       - name: Test signed-out gate, navigation, mobile and logout
         run: npx playwright test tests/tactical-ui.spec.cjs --reporter=line --workers=1
       - uses: actions/upload-artifact@v4
