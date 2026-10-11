@@ -65,6 +65,12 @@ test('offline quest progress and Keep/Sell choice persist, restore Automatic',as
  await page.locator('#mainNav [data-view="quests"]').click();
  await page.locator('#questList [data-action="select"]').first().click();
  await page.locator('#questDetail [data-action="delta"][data-n="1"]').first().click();
+ console.log('QUEST DEBUG',JSON.stringify(await page.evaluate(()=>({
+  pending:JSON.parse(localStorage.getItem('unturnov-v3-pending')||'[]'),
+  remote:JSON.parse(localStorage.getItem('unturnov-v3-events')||'[]').length,
+  goal:document.querySelector('#questDetail .count-actions')?.textContent,
+  sync:document.querySelector('#syncState')?.textContent
+ }))));
  await expect(page.locator('#questDetail .count-actions')).toContainText('2/5');
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('unturnov-v3-pending')||'[]').some(x=>x.kind==='goal_delta'))).toBeTruthy();
  await page.locator('#mainNav [data-view="sell"]').click();
@@ -81,7 +87,7 @@ test('offline quest progress and Keep/Sell choice persist, restore Automatic',as
 test('unified full-site backup contains each player and genuine icon bytes',async({page})=>{
  await setup(page,emails[1]);
  await page.locator('#mainNav [data-view="settings"]').click();
- await page.locator('#saveProtection details').filter({hasText:'Backups & restore'}).locator('summary').click();
+ await page.locator('#accountPanel details').filter({hasText:'Backups & restore'}).locator('summary').click();
  const [download]=await Promise.all([page.waitForEvent('download'),page.locator('[data-action="export"]').click()]);
  const out=JSON.parse(fs.readFileSync(await download.path(),'utf-8'));
  expect(out.version).toBe(5);
