@@ -97,3 +97,19 @@ test('Realtime fails gracefully to 12-second polling without a WebSocket',async(
  await expect(page.locator('#teamRealtimeState')).toHaveText('Polling');
  await expect(page.locator('#dashboardView')).toBeVisible();
 });
+
+test('mocked full restore recreates a quest and genuine icon without touching production',async({page})=>{
+ await setup(page,emails[3]);
+ page.on('dialog',dlg=>dlg.accept());
+ const restored={app:'Unturnov Tactical',version:5,profiles:{
+  Nolan:[],Tyler:[],Kalob:[],Dakota:[{id:'restored-quest',title:'Restored Test Quest',trader:'Ragman',reward:1,
+  deleted:false,pinned:false,notes:'recovered',goals:[{id:'restored-goal',type:'item',name:'AA Battery',total:2,count:1}]}]
+ },tables:{unturnov_item_catalog:[],unturnov_sell_overrides:[{item_key:'mre',decision:'keep'}]},
+ image_files:[{item_key:'aa battery',object_path:'aa battery',content_type:'image/png',bytes_base64:'iVBORw0KGgo='}]};
+ await page.locator('#backupFile').setInputFiles({name:'mock-full-recovery.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(restored))});
+ await expect.poll(()=>page.evaluate(()=>window.__iconFileWrites.length)).toBe(1);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('unturnov-v3-pending')||'[]')
+  .some(e=>e.kind==='quest_created'&&e.quest_id==='restored-quest'))).toBeTruthy();
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('unturnov-sell-manual-pending-v1')||'[]')
+  .some(x=>x.item_key==='mre'&&x.decision==='keep'))).toBeTruthy();
+});
