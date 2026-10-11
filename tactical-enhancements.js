@@ -65,6 +65,11 @@ function rowsMobile(){
   const body=$(id);if(!body)continue;body.closest('table')?.classList.add('mobile-cards');
   $all('#'+id+' > tr').forEach(row=>row.querySelectorAll(':scope > td').forEach((td,i)=>td.dataset.label=names[i]||''));
  }
+ const recipes=$('airdropStages');
+ if(recipes)recipes.querySelectorAll('table').forEach(t=>{
+  t.classList.add('mobile-cards');
+  t.querySelectorAll('tbody > tr').forEach(row=>row.querySelectorAll(':scope > td').forEach((td,i)=>td.dataset.label=['Material / component','Quantity','Collected / status'][i]||''));
+ });
  for(const player of pnames){
   for(const [prefix,names] of [['personalLoot',['Item','Still need','Needed for']],['personalActions',['Action','Still need','Needed for']]]){
    const body=$(prefix+player);if(!body)continue;
