@@ -261,7 +261,7 @@
   window.addEventListener('unturnov:auth',()=>{
    if(!connection()){
     remote=[];pending=[];eventIds=new Set();maxSeq=0;lastSynced=0;
-    reduce();renderStatus();
+    reduce();render();
    }else{
     remote=fromStorage(localKeys.events,[]);pending=fromStorage(localKeys.pending,[]);
     if(!Array.isArray(remote))remote=[];if(!Array.isArray(pending))pending=[];
