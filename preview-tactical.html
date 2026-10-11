@@ -77,6 +77,7 @@ details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}detai
 <style>
 body:not(.auth-evaluated) main{visibility:hidden}
 body.auth-locked #authGate #accountPanel{display:block!important}
+body.auth-locked #settingsLogout{display:none!important}
 .tactical-dialog{background:#112230;border:1px solid #526b7f;color:#f0f4f6;border-radius:14px;padding:22px;width:min(520px,94vw)}
 .tactical-dialog::backdrop{background:#050c14dd}
 .tactical-dialog h3{color:#efc48e}
@@ -128,7 +129,7 @@ body.auth-locked #authGate #accountPanel{display:block!important}
   </select></label>
   <div id="questList" class="quest-list"></div>
  </section>
- <div id="accountSidebarMount"><section class="panel" id="accountPanel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p>
+ <div id="accountSidebarMount"><section class="panel" id="accountPanel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p><div class="actions"><button id="settingsLogout" type="button" data-action="logout">Sign out of this device</button></div>
   <details><summary>Sign in / create account / sign out</summary><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Your approved email"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Account password"></label><div class="actions"><button class="primary" data-action="login">Sign in</button><button data-action="signup">Create account</button><button data-action="logout">Sign out</button></div></details>
   <details><summary>Connection settings (advanced)</summary><p class="muted">Use the same Supabase project on every computer. Never enter a secret or service-role key.</p><label>Project URL<input id="projectUrl" placeholder="https://...supabase.co"></label><label>Publishable key<input id="publicKey" placeholder="sb_publishable_..."></label><button data-action="save-config">Save connection</button></details>
   <details><summary>Backups & restore</summary><p class="muted">Download the full team snapshot: all four players' quests, Airdrop ISR progress, Keep/Sell choices, custom items, and image references. Original image files remain in cloud storage and are not embedded in JSON backups.</p><button data-action="export" class="primary">Download unified full backup</button><label>Restore from a full backup<input id="backupFile" type="file" accept=".json,application/json"></label><p class="muted">Restoring appends new events to shared history and needs two confirmations. Make a current backup first.</p></details>
