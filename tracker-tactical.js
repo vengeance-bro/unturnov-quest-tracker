@@ -319,15 +319,21 @@
   }
   throw Error('Backup too large: '+table);
  }
+ function base64FromBytes(bytes){let raw='';for(let i=0;i<bytes.length;i+=8192)raw+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(raw)}
+function bytesFromBase64(input){const raw=atob(input),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return bytes}
+async function backupImages(refs){const images=[];for(const x of refs){if(!x?.item_key||!x?.object_path)continue;const r=await fetch(conf.url+'/storage/v1/object/public/unturnov-item-icons/'+encodeURIComponent(x.object_path),{headers:{apikey:conf.key}});if(!r.ok)throw Error('Cannot back up image '+x.item_key+' ('+r.status+')');const type=r.headers.get('content-type')?.split(';')[0]?.toLowerCase();if(!['image/png','image/jpeg','image/webp'].includes(type))throw Error('Invalid image type for '+x.item_key);const bytes=new Uint8Array(await r.arrayBuffer());if(bytes.length>2097152)throw Error('Image too large '+x.item_key);images.push({item_key:x.item_key,object_path:x.object_path,content_type:type,bytes_base64:base64FromBytes(bytes)})}return images}
+async function restoreImages(images){let done=0;for(const x of images||[]){if(!x?.item_key||!x.object_path||!x.bytes_base64||!['image/png','image/jpeg','image/webp'].includes(x.content_type))continue;const bytes=bytesFromBase64(x.bytes_base64);if(bytes.length>2097152)throw Error('Image too large '+x.item_key);const r=await fetch(conf.url+'/storage/v1/object/unturnov-item-icons/'+encodeURIComponent(x.object_path),{method:'POST',headers:{apikey:conf.key,Authorization:'Bearer '+session.access_token,'Content-Type':x.content_type,'x-upsert':'true'},body:new Blob([bytes],{type:x.content_type})});if(!r.ok)throw Error('Could not restore '+x.item_key+' ('+r.status+')');const d=await api('/rest/v1/unturnov_item_images?on_conflict=item_key','POST',[{item_key:x.item_key,object_path:x.object_path}],'resolution=merge-duplicates,return=minimal');if(!d.ok)throw Error('Cannot index '+x.item_key);done++}return done}
  async function exportBackup(){
   if(!ready()){alert('Sign in before downloading the shared backup.');return}
   try{
    if(!await refreshAuth())throw Error('Please sign in again.');
    const tables=['quest_events','airdrop_events','unturnov_item_catalog','unturnov_sell_overrides','unturnov_item_images'];
    const payloads=await Promise.all(tables.map(t=>backupRows(t)));
+   const savedImages=await backupImages(payloads[tables.indexOf('unturnov_item_images')]);
    const snapshot={
-    app:'Unturnov Tactical',version:4,exported_at:new Date().toISOString(),
-    includes:'Quests, ISR crafting, item catalog, shared Keep/Sell rules, and image references (not image file bytes)',
+    app:'Unturnov Tactical',version:5,exported_at:new Date().toISOString(),
+    includes:'Quests, crafting, catalog, Keep/Sell decisions, and all verified icon files',
+    image_files:savedImages,
     tables:Object.fromEntries(tables.map((t,i)=>[t,payloads[i]])),
     profiles:model,
     airdropProgress:window.unturnovAirdropSnapshot?.()||null,
@@ -345,7 +351,7 @@
    const d=JSON.parse(await file.text());
    const profiles=d.profiles||(d.quests?{[profile]:d.quests}:null);
    if(!profiles||!pnamesInBackup(profiles))throw Error('The file does not contain recognized quest profiles.');
-   if(d.version===4&&d.app!=='Unturnov Tactical')throw Error('Not a recognized Unturnov full backup.');
+   if((d.version===4||d.version===5)&&d.app!=='Unturnov Tactical')throw Error('Not a recognized Unturnov full backup.');
    const total=pnamesInBackup(profiles).length;
    if(!confirm('RESTORE SHARED TEAM PROGRESS from this file? This appends changes to the current live database for '+total+' profiles, and can affect all four players. Make a backup of the current state first.'))return;
    if(!confirm('Confirm restoration. All four players may see these changes after sync. Continue?'))return;
@@ -368,7 +374,7 @@
     }
    }
    profile=originallySelected;
-   if(d.version===4){
+   if(d.version===4||d.version===5){
     if(d.airdropProgress&&window.unturnovAirdropRestore)
      window.unturnovAirdropRestore(d.airdropProgress);
     if(Array.isArray(d.tables?.unturnov_sell_overrides)){
@@ -385,8 +391,9 @@
      localStorage.setItem(sellStore.pending,JSON.stringify(sellPending));
     }
    }
+   const restoredImages=d.version>=5?await restoreImages(d.image_files):0;
    render();void sync();
-   alert('Restore queued. Wait for all pending updates to synchronize. Inventory icons already stored in Supabase Storage remain available.');
+   alert('Restore queued, including '+restoredImages+' image files. Wait for updates to finish syncing.');
   }catch(e){alert('Could not restore backup: '+e.message)}
   finally{input.value=''}
  }
