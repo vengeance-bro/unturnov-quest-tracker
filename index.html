@@ -213,7 +213,8 @@ body.auth-locked #settingsLogout{display:none!important}
     <details class="image-edit-panel" id="iconLibraryPanel">
      <summary>▧ Genuine item images / bulk importer</summary>
      <p class="muted">Real in-game item icons appear beside their item names in Keep / Sell, Team Loot and Airdrop ISR. Items without a verified image show a placeholder, never a guessed picture.</p>
-     <p class="muted">In Unturned, use the Workshop's item-icon export tools to generate icons for installed assets. Select the exported PNG/JPG/WEBP files below. The importer matches <strong>exact item names only</strong> and skips everything uncertain.</p>
+     <p class="muted"><strong>To export authentic icons:</strong> Launch Unturned with the Unturnov Workshop assets installed, open <strong>Main Menu → Workshop</strong>, press <strong>Shift + F1</strong>, then choose <strong>All Item Icons</strong>. When export finishes, open the <strong>Unturned/Extras/Icons</strong> folder and select the PNG files here. Names ending in an item ID, like <code>AA_Battery_123.png</code>, are supported. Only confirmed exact item names are matched; unmatched files are skipped.</p>
+     <p class="muted"><a href="https://unturned.info/Modding/ItemIcons/" target="_blank" rel="noopener noreferrer">Official Unturned item export instructions ↗</a></p>
      <div class="actions" style="align-items:center">
       <input id="iconBulkFiles" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple aria-label="Choose exported game item icon files" style="flex:1">
       <button type="button" class="primary" id="iconBulkUpload">Import matching icons</button>
