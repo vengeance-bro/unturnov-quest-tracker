@@ -262,6 +262,7 @@ function boot(){
  // Recompute derived dashboard and art once after those syncs.
  setInterval(()=>{showAuth();renderDashboard();void refreshImages();if(view==='activity')void syncActivity();},15000);
  window.addEventListener('focus',()=>{showAuth();renderDashboard()});
+ window.addEventListener('unturnov:cloud-update',()=>{renderDashboard();void refreshImages();if(view==='activity')void syncActivity()});
  window.addEventListener('unturnov:auth',()=>{
   showAuth();
   if(!signedIn()){
