@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unturnov Quest Tracker · Shared Edition</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0c121c;color:#edf3fa}
+*{box-sizing:border-box}body{margin:0;font-size:15px}button,input,select,textarea{font:inherit}button{background:#203148;color:#edf3fa;border:1px solid #3a526e;padding:9px 13px;border-radius:9px;cursor:pointer}button:hover{background:#2c486a}button:disabled{opacity:.4;cursor:not-allowed}button.primary{background:#2869c1;border-color:#4384e0}button.primary:hover{background:#357fe4}button.danger{color:#ffb8bb;border-color:#8b4750}input,select,textarea{background:#0c1725;color:#eff7ff;border:1px solid #344c67;border-radius:8px;padding:10px;max-width:100%}input:focus,textarea:focus,select:focus{outline:2px solid #4788e1;outline-offset:1px}textarea{width:100%;min-height:115px;resize:vertical}label{display:block;margin:12px 0 8px;color:#c0d2e8}label input{display:block;width:100%;margin-top:5px}
+header{padding:20px clamp(15px,4vw,40px);background:#142238;border-bottom:1px solid #263b54}h1{font-size:26px;margin:0 0 5px}h2{font-size:21px;margin:0 0 8px}h3{font-size:17px;margin:18px 0 8px}p{color:#aec0d4;line-height:1.55;margin:6px 0 12px}small,.muted{font-size:12px;color:#9eb4cd}.warn{color:#ffb77f}.good{color:#76d6a5}.pending{color:#ffda87}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 12px}.tabs button{flex:1 1 170px;font-weight:700}.tabs button.active{background:#326fc1;border-color:#80b4fd}.cloud-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 12px;background:#0d1d2e;border:1px solid #304763;border-radius:10px}.cloud-row>*{margin:0}#accountLabel{font-weight:600}
+main{display:grid;grid-template-columns:minmax(225px,320px) minmax(0,1fr);gap:18px;max-width:1400px;margin:18px auto;padding:0 16px}.panel{border:1px solid #2b4058;background:#152236;border-radius:14px;padding:17px;min-width:0;margin-bottom:17px}.row{display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sidebar{min-width:0}.sidebar .panel{position:static}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}.actions>button{flex-shrink:0}.full{width:100%}
+.quest-list{display:flex;flex-direction:column;gap:6px;max-height:58vh;overflow:auto;margin-top:11px}.quest-row{display:flex;justify-content:space-between;gap:6px;align-items:center;text-align:left;width:100%}.quest-row.active{outline:2px solid #69a2fa}.quest-row span{min-width:0}.quest-row b{display:block;overflow:hidden;text-overflow:ellipsis}.quest-row small{display:block;margin-top:3px}.empty{padding:25px 0;text-align:center}.headline{display:flex;justify-content:space-between;gap:8px;align-items:start;flex-wrap:wrap}.goal-line{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #2d4055;padding:11px 0}.count-actions{display:flex;gap:9px;align-items:center;white-space:nowrap}.count-actions button{font-size:20px;padding:4px 12px}.count-actions strong{font-variant-numeric:tabular-nums;min-width:45px;text-align:center}.edit-goal{display:grid;grid-template-columns:minmax(0,1fr) 80px 105px 40px;gap:7px;margin:8px 0}.edit-goal input{width:100%;min-width:0}.edit-goal select{min-width:0;width:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 7px;text-align:left;border-bottom:1px solid #2a3d52;vertical-align:top}th:nth-child(2),td:nth-child(2){text-align:right;font-variant-numeric:tabular-nums;font-weight:700}.overflow{overflow:auto}
+details{margin:10px 0}summary{cursor:pointer;font-weight:700;padding:6px 0}details label{font-size:13px}#syncState{font-weight:700}.notice{padding:12px;border-radius:9px;background:#1d3248;color:#c1d8f1;font-size:13px;line-height:1.6}input[type=file]{max-width:100%}#pendingCount{font-weight:700}
+@media(max-width:740px){main{grid-template-columns:1fr}.sidebar .panel{position:static}.quest-list{max-height:260px}.edit-goal{grid-template-columns:minmax(0,1fr) 72px}.edit-goal select{grid-column:1}.edit-goal button{grid-column:2}.goal-line{align-items:start}}
+[hidden]{display:none!important}
+
+/* Shared Airdrop ISR crafting tracker */
+.airdrop-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#e8f4ff;background:#29476d;border:1px solid #557da9;border-radius:9px;padding:8px 13px;margin-top:9px;font-weight:700}
+.airdrop-link:hover{background:#35618e}
+.airdrop-panel{scroll-margin-top:16px}
+.airdrop-panel>summary{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;font-size:20px;padding:2px 0 12px}
+.airdrop-panel>summary .muted{font-size:13px;font-weight:400}
+.airdrop-panel>summary:hover{color:#b7d7ff}
+.airdrop-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:13px 0}
+.airdrop-metric{background:#203249;border:1px solid #344b66;padding:11px;border-radius:10px}
+.airdrop-metric strong{display:block;font-size:19px;margin:5px 0 0;font-variant-numeric:tabular-nums}
+.airdrop-progress{width:100%;height:13px;accent-color:#4993f0}
+.airdrop-counter{display:flex;gap:5px;align-items:center;justify-content:flex-end;min-width:165px}
+.airdrop-counter button{font-size:17px;padding:4px 10px}
+.airdrop-counter input{width:69px;text-align:center;padding:7px 3px;font-variant-numeric:tabular-nums;appearance:textfield}
+.airdrop-counter input::-webkit-inner-spin-button{-webkit-appearance:none}
+.airdrop-check{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid #283a50;cursor:pointer}
+.airdrop-check input{width:19px;height:19px;accent-color:#4988ee}
+.airdrop-check small{margin-left:auto}
+.airdrop-recipe{border:1px solid #354c69;border-radius:10px;padding:11px 13px;margin:10px 0;background:#182941}
+.airdrop-recipe>summary{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.airdrop-recipe>summary strong{display:block}
+.airdrop-recipe>summary small{display:block;margin-top:4px}
+.craft-bubble{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;background:#27496e;border-radius:50%}
+#airdropSyncStatus{font-weight:650}
+@media(max-width:740px){.airdrop-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.airdrop-panel>summary{font-size:17px}}
+
+
+.airdrop-sections{display:grid;grid-template-columns:minmax(0,1fr);gap:13px;margin:17px 0}
+.airdrop-recipe{padding:16px;border:1px solid #496382;background:#192b40;border-radius:12px;min-width:0;margin:0}
+.airdrop-recipe h3{margin:4px 0 0;font-size:19px}
+.airdrop-stage-status{font-size:13px;font-weight:700}
+.airdrop-stage-tools{margin-top:15px;border-top:1px solid #354d68;padding-top:12px}
+.airdrop-stage-tools>strong{font-size:13px}
+.airdrop-actions{align-items:center}
+.airdrop-actions button.danger{background:#44242d;color:#ffccd0;border-color:#a7616d}
+.airdrop-actions button.danger:hover{background:#672c39}
+.airdrop-recipe table td:nth-child(2),.airdrop-recipe table th:nth-child(2){text-align:center;min-width:62px}
+.airdrop-recipe table td:nth-child(3),.airdrop-recipe table th:nth-child(3){text-align:right}
+.airdrop-recipe .airdrop-counter{margin-left:auto}
+.airdrop-recipe .actions{margin-bottom:0}
+@media(max-width:740px){.airdrop-recipe{padding:12px}.airdrop-counter{min-width:132px;gap:3px}.airdrop-counter input{width:54px}.airdrop-counter button{padding:4px 8px}}
+
+.loot-section-heading{margin:20px 0 8px;padding-top:12px;border-top:1px solid #34465f;color:#dcecff}
+.loot-section-heading:first-of-type{border-top:0;margin-top:10px;padding-top:0}
+
+.sell-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.sell-controls label{margin:0}
+.sell-controls input,.sell-controls select{margin-top:6px}
+.sell-results{max-height:470px;overflow:auto;border:1px solid #2a415b;border-radius:9px}
+.sell-results table{min-width:740px}
+.sell-decision-select{min-width:120px;max-width:160px;padding:7px;font-size:13px}
+.sell-results td:nth-child(4){min-width:125px}
+.sell-results td.warn{font-weight:750;color:#ffb77f}
+.sell-results th{position:sticky;top:0;background:#1a2d44;z-index:1}
+.sell-results td:nth-child(2){font-size:12px;color:#b2c5dc}
+.sell-results td:nth-child(3){font-weight:650;min-width:135px}
+#sellLookupResult:empty{display:none}
+@media(max-width:740px){.sell-controls{grid-template-columns:1fr}.sell-results{max-height:420px}}
+</style>
+<link rel="stylesheet" href="./tactical.css?v=20261011-preview">
+<style>
+body:not(.auth-evaluated) main{visibility:hidden}
+body.auth-locked #authGate #accountPanel{display:block!important}
+.tactical-dialog{background:#112230;border:1px solid #526b7f;color:#f0f4f6;border-radius:14px;padding:22px;width:min(520px,94vw)}
+.tactical-dialog::backdrop{background:#050c14dd}
+.tactical-dialog h3{color:#efc48e}
+.tactical-toast{position:fixed;bottom:18px;right:18px;z-index:90;padding:12px 17px;background:#243d39;color:#ccf5df;border:1px solid #5f967d;border-radius:9px;box-shadow:0 6px 26px #000a;max-width:350px}
+.tactical-toast.error{background:#442631;color:#ffccd0;border-color:#c06e75}
+</style>
+</head>
+<body class="auth-locked" data-view="dashboard">
+<header id="siteHeader">
+ <div class="topline"><div class="brandline"><div class="brandmark" aria-hidden="true">⌖</div><div>
+  <span class="edition">TACTICAL OPERATIONS / SHARED PROGRESS</span>
+  <h1>UNTURNOV TRACKER</h1>
+  <p>Team mission control · Nolan · Tyler · Kalob · Dakota</p>
+ </div></div>
+ <div class="top-actions"><span id="tacticalAuthStatus" class="edition">TEAM ACCESS</span><span id="tacticalAccount" class="account-pill">Connecting</span></div></div>
+ <nav id="mainNav" aria-label="Main website navigation">
+  <button type="button" data-view="dashboard">◈ &nbsp;Overview</button>
+  <button type="button" data-view="quests">☷ &nbsp;Quests</button>
+  <button type="button" data-view="team">▣ &nbsp;Team Loot</button>
+  <button type="button" data-view="airdrop">◎ &nbsp;Airdrop ISR</button>
+  <button type="button" data-view="sell">↔ &nbsp;Keep / Sell</button>
+  <button type="button" data-view="activity">◷ &nbsp;Activity</button>
+  <button type="button" data-view="settings">⚙ &nbsp;Settings</button>
+ </nav>
+ <div class="cloud-row"><span id="syncState">Loading…</span><span class="muted" id="lastSynced">Last cloud sync: Never</span><span class="muted">Pending updates: <b id="pendingCount">0</b></span><button data-action="sync">↻ Sync</button><button data-action="undo">Undo last change</button></div>
+</header>
+<section id="authGate"><div class="auth-gate-card"><div class="brandmark" aria-hidden="true" style="margin:0 auto">⌖</div>
+ <h2>Private team workspace</h2>
+ <p>Sign in with an approved account to access shared quests, crafting, item photos, and Keep / Sell decisions.</p>
+ <div id="authPanelMount"></div>
+ </div></section>
+<main id="appMain">
+ <aside class="sidebar">
+ <section class="panel" id="questSidebarPanel">
+  <nav id="tabs" class="tabs" aria-label="Player quests"></nav>
+  <div class="row"><h2>Quests</h2><button class="primary" data-action="add-quest">+ Add quest</button></div>
+  <p id="questStats" class="muted"></p>
+  <input class="full" id="search" placeholder="Search quests or items" aria-label="Search quests">
+  <label>Show<select id="filterSelect" class="full"><option value="active">Active quests</option><option value="completed">Completed quests</option><option value="all">All quests</option><option value="deleted">Recently deleted</option></select></label>
+  <label>Sort quests<select id="sortSelect" class="full" aria-label="Sort quests">
+   <option value="pinned">📌 Pinned first (default)</option>
+   <option value="name-asc">Name (A–Z)</option>
+   <option value="name-desc">Name (Z–A)</option>
+   <option value="trader">Trader (A–Z)</option>
+   <option value="progress-high">Closest to completed</option>
+   <option value="progress-low">Least progress</option>
+   <option value="newest">Newest added first</option>
+   <option value="oldest">Oldest added first</option>
+  </select></label>
+  <div id="questList" class="quest-list"></div>
+ </section>
+ <div id="accountSidebarMount"><section class="panel" id="accountPanel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p>
+  <details><summary>Sign in / create account / sign out</summary><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Your approved email"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Account password"></label><div class="actions"><button class="primary" data-action="login">Sign in</button><button data-action="signup">Create account</button><button data-action="logout">Sign out</button></div></details>
+  <details><summary>Connection settings (advanced)</summary><p class="muted">Use the same Supabase project on every computer. Never enter a secret or service-role key.</p><label>Project URL<input id="projectUrl" placeholder="https://...supabase.co"></label><label>Publishable key<input id="publicKey" placeholder="sb_publishable_..."></label><button data-action="save-config">Save connection</button></details>
+  <details><summary>Backups & restore</summary><p class="muted">Download the full team snapshot: all four players' quests, Airdrop ISR progress, Keep/Sell choices, custom items, and image references. Original image files remain in cloud storage and are not embedded in JSON backups.</p><button data-action="export" class="primary">Download unified full backup</button><label>Restore from a full backup<input id="backupFile" type="file" accept=".json,application/json"></label><p class="muted">Restoring appends new events to shared history and needs two confirmations. Make a current backup first.</p></details>
+ </section></div>
+ </aside>
+ <div id="mainWorkspace">
+  <section class="panel" id="dashboardView" aria-label="Team overview">
+   <p class="dashboard-kicker">Operational status / Team overview</p>
+   <h2 class="dashboard-lead">Everything your squad needs. One place.</h2>
+   <p class="dashboard-intro">Shared quest progress, item requirements and crafting readiness. Every player has an independent quest log.</p>
+   <div class="dashboard-stats" id="dashboardStats"></div>
+   <h3>Squad progression</h3>
+   <div class="dashboard-players" id="dashboardPlayers"></div>
+   <div class="dashboard-shortcuts">
+    <button type="button" data-go-view="quests">☷ &nbsp; View quests</button>
+    <button type="button" data-go-view="sell">↔ &nbsp; Keep / Sell guide</button>
+    <button type="button" data-go-view="airdrop">◎ &nbsp; Craft Airdrop ISR</button>
+   </div>
+   <p id="dashboardUpdated" class="muted" style="margin-top:18px"></p>
+  </section>
+  <section class="panel" id="questDetail"></section>
+  <section class="panel personal-loot-panel" id="personal-nolan" hidden>
+    <h2>🎒 Nolan’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Nolan's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootNolan"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsNolan"></tbody></table></div>
+   </section>
+  <section class="panel personal-loot-panel" id="personal-tyler" hidden>
+    <h2>🎒 Tyler’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Tyler's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootTyler"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsTyler"></tbody></table></div>
+   </section>
+  <section class="panel personal-loot-panel" id="personal-kalob" hidden>
+    <h2>🎒 Kalob’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Kalob's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootKalob"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsKalob"></tbody></table></div>
+   </section>
+  <section class="panel personal-loot-panel" id="personal-dakota" hidden>
+    <h2>🎒 Dakota’s Personal Loot List</h2>
+    <p class="muted">Remaining items and actions for Dakota's unfinished quests. Shared item requirements are combined; one Bundle of Dogtags counts as 10 Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalLootDakota"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Still need</th><th>Needed for</th></tr></thead><tbody id="personalActionsDakota"></tbody></table></div>
+   </section>
+  <section class="panel" id="teamSection"><p class="dashboard-kicker">Squad resources</p><h2>▣ Team Loot List</h2>
+    <p class="muted">Remaining items and actions across Nolan, Tyler, Kalob and Dakota. One Bundle of Dogtags counts as 10 individual Dogtags.</p>
+    <h3 class="loot-section-heading">📦 Items to collect</h3>
+    <div class="overflow"><table><thead><tr><th>Item</th><th>Total needed</th><th>Who needs it</th></tr></thead><tbody id="teamLoot"></tbody></table></div>
+    <h3 class="loot-section-heading">✅ Actions to complete</h3>
+    <div class="overflow"><table><thead><tr><th>Action</th><th>Total remaining</th><th>Who needs it</th></tr></thead><tbody id="teamActions"></tbody></table></div>
+   </section>
+  <section class="panel" id="sellSection">
+    <h2>💰 Able to Sell / Keep</h2>
+    <p>Compares items against <strong>all four players' outstanding quests</strong> and <strong>unfinished Airdrop ISR crafting</strong>. Choose <strong>Keep</strong> or <strong>Sell</strong> on any row to override the automatic recommendation for your entire team.</p>
+    <div class="notice"><strong>Automatic</strong> follows current quests and crafting. Manual <strong>Keep</strong> and <strong>Sell</strong> decisions stay in place until someone returns the item to Automatic. Selling a currently required item shows a warning, but doesn't remove its quest/crafting requirement. These are item-planning labels, not actual inventory transactions. Future quests and special gear may still matter.</div>
+    <p class="muted" id="sellSummary">Comparing current requirements…</p>
+    <p class="muted" id="sellOverrideStatus" role="status">Loading shared Keep/Sell choices…</p>
+    <div class="sell-controls">
+     <label>Show
+      <select id="sellMode" class="full" aria-label="Sell guide status filter">
+       <option value="sell">Sell list (automatic + manual)</option>
+       <option value="keep">Keep list (automatic + manual)</option>
+       <option value="all">All known items</option>
+      </select>
+     </label>
+     <label>Find an item
+      <input class="full" id="sellSearch" placeholder="Search item or category…" aria-label="Search Unturnov sell guide">
+     </label>
+    </div>
+    <p id="sellLookupResult" class="muted" role="status"></p>
+    <div class="overflow sell-results"><table><thead><tr><th>Item</th><th>Category</th><th>Status</th><th>Move to</th><th>Needed for</th></tr></thead><tbody id="sellList"></tbody></table></div>
+    <details class="image-edit-panel" id="iconLibraryPanel">
+     <summary>▧ Genuine item images / bulk importer</summary>
+     <p class="muted">Real in-game item icons appear beside their item names in Keep / Sell, Team Loot and Airdrop ISR. Items without a verified image show a placeholder, never a guessed picture.</p>
+     <p class="muted">In Unturned, use the Workshop's item-icon export tools to generate icons for installed assets. Select the exported PNG/JPG/WEBP files below. The importer matches <strong>exact item names only</strong> and skips everything uncertain.</p>
+     <div class="actions" style="align-items:center">
+      <input id="iconBulkFiles" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple aria-label="Choose exported game item icon files" style="flex:1">
+      <button type="button" class="primary" id="iconBulkUpload">Import matching icons</button>
+     </div>
+     <p class="muted" id="iconBulkStatus" role="status">No import in progress.</p>
+    </details>
+    <h3>Know another Unturnov item?</h3>
+    <p class="muted">Add any missing game item to the shared catalog. It will automatically change from Able to Sell to Keep if a tracked quest or crafting recipe starts requiring it.</p>
+    <div class="actions"><input id="sellAddName" placeholder="Exact item name" aria-label="Missing Unturnov item" style="flex:1;min-width:150px">
+     <button type="button" class="primary" data-action="sell-add-item">+ Add to shared catalog</button></div>
+    <p class="muted">Based on the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3488332060" target="_blank" rel="noopener noreferrer">PandaHut Unturnov item guide</a>, the <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3590261459" target="_blank" rel="noopener noreferrer">community loot guide</a>, your quests, and items added by players.</p>
+   </section>
+  <details class="panel airdrop-panel" id="airdropSection" open>
+   <summary><strong>🛰️ Airdrop ISR Crafting Tracker</strong><span class="muted" id="airdropSummary">Loading recipe…</span></summary>
+   <p>One shared build for Nolan, Tyler, Kalob and Dakota. Track materials collected, consumed crafting tools, and each crafted subassembly. Your changes synchronize between browsers when signed in.</p>
+   <div class="notice">The tracker is shared between all three players. Each recipe has its own item counters. Bort Drills and Tape are consumed during crafting, so each use needs its own item. <strong>Wire</strong> and <strong>Wires</strong> are separate materials.</div>
+   <div class="airdrop-metrics">
+    <div class="airdrop-metric"><small>Materials collected</small><strong id="airdropMaterialTotal">0 / 194</strong></div>
+    <div class="airdrop-metric"><small>Drills & Tape</small><strong id="airdropToolTotal">0 / 4</strong></div>
+    <div class="airdrop-metric"><small>Subassemblies crafted</small><strong id="airdropStageTotal">0 / 3</strong></div>
+    <div class="airdrop-metric"><small>Final Airdrop ISR</small><strong id="airdropFinalStatus">Not crafted</strong></div>
+   </div>
+   <progress class="airdrop-progress" id="airdropProgress" value="0" max="194" aria-label="Airdrop material collection progress"></progress>
+   <div class="airdrop-actions actions">
+    <button type="button" data-airdrop-action="sync">↻ Sync crafting</button>
+    <button type="button" data-airdrop-action="download">Download crafting backup</button>
+    <button type="button" class="danger" data-airdrop-action="reset"><span aria-hidden="true">↺</span> Reset Entire Build</button>
+   </div>
+   <p class="muted">Track items within each section below. Each Bort Drill or Tape is a one-use item, tracked separately in the Globe, Frame, Support, and final ISR recipes.</p>
+   <div id="airdropStages" class="airdrop-sections"></div>
+   <p class="muted"><span id="airdropSyncStatus">Checking shared crafting progress…</span> · <span id="airdropLastSynced">Last sync: Not yet</span></p>
+  </details>
+  <section class="panel" id="activitySection">
+   <p class="dashboard-kicker">Transparency / Recent updates</p>
+   <div class="row"><div><h2>Team Activity</h2><p class="muted">Recent quest, crafting and Keep/Sell changes. Author names are shown when they can be verified.</p></div>
+    <select id="activityScope" aria-label="Activity type"><option value="all">All changes</option><option value="quest">Quests</option><option value="craft">Airdrop ISR</option><option value="sell">Keep / Sell</option></select>
+   </div>
+   <div id="activityList" aria-live="polite"><p class="muted">Loading recent updates…</p></div>
+  </section>
+  <section class="panel" id="saveProtection"><h3>Save protection</h3><div class="notice">Private team accounts, append-only quest/crafting histories, a separate protected recovery snapshot, and queued offline updates. When signing out, all pending changes must synchronize before cached game data is cleared. For a downloadable recovery point, use Settings → Unified Backup.</div></section>
+ </div>
+</main><dialog id="itemImageDialog" class="tactical-dialog">
+ <h3 id="itemImageTitle">Real game item icon</h3>
+ <p>Upload only a matching Unturnov inventory icon. False matches make the Keep / Sell list less useful for everyone.</p>
+ <label>Image file<input id="itemImageFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
+ <p class="muted" id="itemImageStatus"></p>
+ <div class="actions"><button id="itemImageUpload" class="primary" type="button">Upload verified icon</button><button id="itemImageCancel" type="button">Cancel</button></div>
+</dialog>
+<div id="tacticalToast" class="tactical-toast" role="status" aria-live="polite" hidden></div>
+
+<script src="./sell-catalog.js?v=20261011-tactical"></script>
+<script src="./core-v3.js?v=20261011-tactical"></script>
+<script src="./tracker-tactical.js?v=20261011-preview"></script>
+<script src="./airdrop-tactical.js?v=20261011-preview"></script>
+<script src="./tactical-enhancements.js?v=20261011-bulk-icons"></script>
+</body></html>
