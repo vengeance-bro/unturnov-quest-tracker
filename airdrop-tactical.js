@@ -257,6 +257,7 @@
   node.addEventListener('change',onChange);
   node.addEventListener('focusout',e=>{if(e.target.matches?.('input[data-airdrop-quantity]'))requestAnimationFrame(()=>render())});
   window.addEventListener('focus',()=>void sync());
+  window.addEventListener('unturnov:cloud-update',()=>void sync());
   window.addEventListener('online',()=>void sync());
   window.addEventListener('unturnov:auth',()=>{
    if(!connection()){
