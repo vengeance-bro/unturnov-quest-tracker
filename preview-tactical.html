@@ -209,6 +209,16 @@ body.auth-locked #authGate #accountPanel{display:block!important}
     </div>
     <p id="sellLookupResult" class="muted" role="status"></p>
     <div class="overflow sell-results"><table><thead><tr><th>Item</th><th>Category</th><th>Status</th><th>Move to</th><th>Needed for</th></tr></thead><tbody id="sellList"></tbody></table></div>
+    <details class="image-edit-panel" id="iconLibraryPanel">
+     <summary>▧ Genuine item images / bulk importer</summary>
+     <p class="muted">Real in-game item icons appear beside their item names in Keep / Sell, Team Loot and Airdrop ISR. Items without a verified image show a placeholder, never a guessed picture.</p>
+     <p class="muted">In Unturned, use the Workshop's item-icon export tools to generate icons for installed assets. Select the exported PNG/JPG/WEBP files below. The importer matches <strong>exact item names only</strong> and skips everything uncertain.</p>
+     <div class="actions" style="align-items:center">
+      <input id="iconBulkFiles" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" multiple aria-label="Choose exported game item icon files" style="flex:1">
+      <button type="button" class="primary" id="iconBulkUpload">Import matching icons</button>
+     </div>
+     <p class="muted" id="iconBulkStatus" role="status">No import in progress.</p>
+    </details>
     <h3>Know another Unturnov item?</h3>
     <p class="muted">Add any missing game item to the shared catalog. It will automatically change from Able to Sell to Keep if a tracked quest or crafting recipe starts requiring it.</p>
     <div class="actions"><input id="sellAddName" placeholder="Exact item name" aria-label="Missing Unturnov item" style="flex:1;min-width:150px">
@@ -249,7 +259,7 @@ body.auth-locked #authGate #accountPanel{display:block!important}
  <p>Upload only a matching Unturnov inventory icon. False matches make the Keep / Sell list less useful for everyone.</p>
  <label>Image file<input id="itemImageFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
  <p class="muted" id="itemImageStatus"></p>
- <div class="actions"><button id="itemImageUpload" class="primary" type="button">Upload verified icon</button><button type="button" onclick="document.getElementById('itemImageDialog').close()">Cancel</button></div>
+ <div class="actions"><button id="itemImageUpload" class="primary" type="button">Upload verified icon</button><button id="itemImageCancel" type="button">Cancel</button></div>
 </dialog>
 <div id="tacticalToast" class="tactical-toast" role="status" aria-live="polite" hidden></div>
 
@@ -257,5 +267,5 @@ body.auth-locked #authGate #accountPanel{display:block!important}
 <script src="./core-v3.js?v=20261011-tactical"></script>
 <script src="./tracker-tactical.js?v=20261011-preview"></script>
 <script src="./airdrop-tactical.js?v=20261011-preview"></script>
-<script src="./tactical-enhancements.js?v=20261011-preview"></script>
+<script src="./tactical-enhancements.js?v=20261011-bulk-icons"></script>
 </body></html>
