@@ -496,6 +496,7 @@ async function restoreImages(images){let done=0;for(const x of images||[]){if(!x
  render();if(edit)renderEditor();
  setInterval(()=>{void sync()},12000);
  window.addEventListener('focus',()=>void sync());
+ window.addEventListener('unturnov:cloud-update',()=>void sync());
  window.addEventListener('online',()=>void sync());
  void sync();
  }
