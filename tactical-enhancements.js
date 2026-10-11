@@ -262,7 +262,15 @@ function boot(){
  // Recompute derived dashboard and art once after those syncs.
  setInterval(()=>{showAuth();renderDashboard();void refreshImages();if(view==='activity')void syncActivity();},15000);
  window.addEventListener('focus',()=>{showAuth();renderDashboard()});
- window.addEventListener('unturnov:auth',()=>{showAuth();renderDashboard();if(signedIn())void refreshImages()});
+ window.addEventListener('unturnov:auth',()=>{
+  showAuth();
+  if(!signedIn()){
+   activityData=[];memberMap={};imageMap.clear();
+   if($('activityList'))$('activityList').textContent='';
+   if($('dashboardStats'))$('dashboardStats').innerHTML='';
+   if($('dashboardPlayers'))$('dashboardPlayers').innerHTML='';
+  }else{renderDashboard();void refreshImages();}
+ });
  if(signedIn()){void refreshImages();void syncActivity()}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
