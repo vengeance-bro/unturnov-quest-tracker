@@ -92,7 +92,7 @@ body.auth-locked #settingsLogout{display:none!important}
   <h1>UNTURNOV TRACKER</h1>
   <p>Team mission control · Nolan · Tyler · Kalob · Dakota</p>
  </div></div>
- <div class="top-actions"><span id="tacticalAuthStatus" class="edition">TEAM ACCESS</span><span id="tacticalAccount" class="account-pill">Connecting</span><button type="button" id="quickLogout" data-action="logout">Sign out</button></div></div>
+ <div class="top-actions"><span id="tacticalAuthStatus" class="edition">TEAM ACCESS</span><span id="tacticalAccount" class="account-pill">Connecting</span><span id="teamRealtimeState" class="account-pill" title="Cloud synchronization">Polling</span><button type="button" id="quickLogout" data-action="logout">Sign out</button></div></div>
  <nav id="mainNav" aria-label="Main website navigation">
   <button type="button" data-view="dashboard">◈ &nbsp;Overview</button>
   <button type="button" data-view="quests">☷ &nbsp;Quests</button>
@@ -132,7 +132,7 @@ body.auth-locked #settingsLogout{display:none!important}
  <div id="accountSidebarMount"><section class="panel" id="accountPanel"><h3>Account & cloud</h3><p class="muted">Signed in as <span id="accountLabel">Not signed in</span></p><div class="actions"><button id="settingsLogout" type="button" data-action="logout">Sign out of this device</button></div>
   <details><summary>Sign in / create account / sign out</summary><label>Email<input id="loginEmail" type="email" autocomplete="username" placeholder="Your approved email"></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Account password"></label><div class="actions"><button class="primary" data-action="login">Sign in</button><button data-action="signup">Create account</button><button data-action="logout">Sign out</button></div></details>
   <details><summary>Connection settings (advanced)</summary><p class="muted">Use the same Supabase project on every computer. Never enter a secret or service-role key.</p><label>Project URL<input id="projectUrl" placeholder="https://...supabase.co"></label><label>Publishable key<input id="publicKey" placeholder="sb_publishable_..."></label><button data-action="save-config">Save connection</button></details>
-  <details><summary>Backups & restore</summary><p class="muted">Download the full team snapshot: all four players' quests, Airdrop ISR progress, Keep/Sell choices, custom items, and image references. Original image files remain in cloud storage and are not embedded in JSON backups.</p><button data-action="export" class="primary">Download unified full backup</button><label>Restore from a full backup<input id="backupFile" type="file" accept=".json,application/json"></label><p class="muted">Restoring appends new events to shared history and needs two confirmations. Make a current backup first.</p></details>
+  <details><summary>Backups & restore</summary><p class="muted">Download the full team snapshot: all four players' quests, Airdrop ISR progress, Keep/Sell choices, custom items, and image references. Current backups also include the verified image files and their metadata.</p><button data-action="export" class="primary">Download unified full backup</button><label>Restore from a full backup<input id="backupFile" type="file" accept=".json,application/json"></label><p class="muted">Restoring appends new events to shared history and needs two confirmations. Make a current backup first.</p></details>
  </section></div>
  </aside>
  <div id="mainWorkspace">
@@ -269,4 +269,5 @@ body.auth-locked #settingsLogout{display:none!important}
 <script src="./tracker-tactical.js?v=20261011-preview"></script>
 <script src="./airdrop-tactical.js?v=20261011-preview"></script>
 <script src="./tactical-enhancements.js?v=20261011-bulk-icons-2"></script>
+<script src="./team-realtime.js?v=20261011-realtime1"></script>
 </body></html>
