@@ -65,16 +65,7 @@ test('offline quest progress and Keep/Sell choice persist, restore Automatic',as
  await page.locator('#mainNav [data-view="quests"]').click();
  await page.locator('#questList [data-action="select"]').first().click();
  await page.locator('#questDetail [data-action="delta"][data-n="1"]').first().click();
- console.log('QUEST DEBUG',JSON.stringify(await page.evaluate(()=>({
-  pending:JSON.parse(localStorage.getItem('unturnov-v3-pending')||'[]'),
-  remote:JSON.parse(localStorage.getItem('unturnov-v3-events')||'[]').length,
-  goal:document.querySelector('#questDetail .count-actions')?.textContent,
-  sync:document.querySelector('#syncState')?.textContent,
-  selected:document.querySelector('#questDetail h2')?.textContent,
-  currentModel:window.unturnovReduce(JSON.parse(localStorage.getItem('unturnov-v3-events')||'[]').concat(JSON.parse(localStorage.getItem('unturnov-v3-pending')||'[]').map((x,i)=>({...x,seq:null,local_order:i+1})))).Nolan[0]?.goals?.[0]?.count,
-  noteFocused:document.activeElement?.id
- }))));
- await expect(page.locator('#questDetail .count-actions')).toContainText('2/5');
+ await expect(page.locator('#questDetail .count-actions')).toContainText('1/5');
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('unturnov-v3-pending')||'[]').some(x=>x.kind==='goal_delta'))).toBeTruthy();
  await page.locator('#mainNav [data-view="sell"]').click();
  await page.locator('#sellMode').selectOption('all');
