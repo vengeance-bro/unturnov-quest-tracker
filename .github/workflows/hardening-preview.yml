@@ -1,0 +1,39 @@
+name: Hardening preview browser checks
+on:
+  push:
+    branches: [hardening-recovery-20261011]
+    paths:
+      - 'index.html'
+      - 'tracker-tactical.js'
+      - 'airdrop-tactical.js'
+      - 'tactical-enhancements.js'
+      - 'team-realtime.js'
+      - 'tests/tactical-hardening.spec.cjs'
+      - '.github/workflows/hardening-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test@1.56.1
+      - name: Install chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start isolated web server
+        run: python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/preview-log.txt 2>&1 &
+      - name: Browser tests, no real player passwords
+        env:
+          SITE_URL: http://127.0.0.1:8765/
+        run: npx playwright test tests/tactical-hardening.spec.cjs --reporter=line --workers=1
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: hardening-test-errors
+          path: test-results/
