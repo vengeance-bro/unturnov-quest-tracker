@@ -53,8 +53,8 @@ test('sign-out clears cached progress and reveals sign-in gate',async({page})=>{
  await fakeSignedIn(page);await page.goto(url);
  await page.evaluate(()=>localStorage.setItem('unturnov-v3-events','[]'));
  await page.locator('#mainNav [data-view="settings"]').click();
- await page.locator('[data-action="logout"]').click();
  page.on('dialog',dlg=>dlg.accept());
+ await page.locator('[data-action="logout"]').click();
  await expect(page.locator('#authGate')).toBeVisible();
  await expect(page.locator('#mainNav')).toBeHidden();
  expect(await page.evaluate(()=>localStorage.getItem('unturnov-v3-events'))).toBeNull();
