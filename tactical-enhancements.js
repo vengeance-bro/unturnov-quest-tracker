@@ -134,6 +134,52 @@ function openUpload(name){
  $('itemImageFile').value='';$('itemImageStatus').textContent='Upload the actual in-game PNG, JPG, or WEBP icon (max 2 MB).';
  $('itemImageDialog').showModal();
 }
+function knownIconItems(){
+ const found=new Map();
+ const add=name=>{
+  if(!name)return;const k=keyOf(name);
+  if(!k||!found.has(k))found.set(k,String(name));
+ };
+ for(const x of window.unturnovSellCatalog||[])add(x.name);
+ for(const q of Object.values(data()).flat())for(const g of q.goals||[])if(g.type!=='action')add(g.name);
+ for(const x of window.unturnovAirdropNeeds?.()||[])add(x.name);
+ return found;
+}
+async function sendBulkIcons(){
+ const files=[...($('iconBulkFiles')?.files||[])];
+ if(!signedIn()){toast('Sign in before uploading icons.','error');return}
+ if(!files.length){toast('Choose actual exported game item icons.','error');return}
+ const known=knownIconItems(),match=[],unmatched=[],unique=new Set();
+ for(const file of files){
+  if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024){unmatched.push(file.name);continue}
+  const stem=file.name.replace(/\.(png|jpg|jpeg|webp)$/i,'').replace(/_\d+$/,'').replace(/_/g,' ').trim();
+  const canonical=keyOf(stem);
+  if(known.has(canonical)&&!unique.has(canonical)){unique.add(canonical);match.push({file,key:canonical})}
+  else unmatched.push(file.name);
+ }
+ if(!match.length){toast('No exact filename matches. Upload icons individually or export matching game item names.','error');return}
+ if(!confirm('Found '+match.length+' exact item-name image matches. '+unmatched.length+' files will be skipped (no guessing). Upload matching images to the shared site?'))return;
+ const btn=$('iconBulkUpload');btn.disabled=true;
+ let saved=0,failed=0,next=0;
+ const status=$('iconBulkStatus');
+ const update=()=>{if(status)status.textContent='Saved '+saved+' of '+match.length+' verified icons · '+failed+' errors · '+unmatched.length+' unmatched names skipped'};
+ async function worker(){
+  while(next<match.length){
+   const item=match[next++];
+   try{
+    await api('/storage/v1/object/unturnov-item-icons/'+encodeURIComponent(item.key),'POST',item.file,{'Content-Type':item.file.type,'x-upsert':'true'});
+    await api('/rest/v1/unturnov_item_images?on_conflict=item_key','POST',
+     [{item_key:item.key,object_path:item.key,updated_at:new Date().toISOString()}],
+     {'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'});
+    saved++;
+   }catch(e){failed++;console.warn('Image upload',item.file.name,e.message)}
+   update();
+  }
+ }
+ update();await Promise.all(Array.from({length:Math.min(3,match.length)},()=>worker()));
+ btn.disabled=false;imageNonce++;await refreshImages();
+ toast(saved+' game item icons added. '+unmatched.length+' unmatched names skipped.',failed?'error':'good');
+}
 async function sendIcon(){
  const file=$('itemImageFile').files?.[0];
  if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024){toast('Choose a PNG, JPG or WEBP under 2 MB.','error');return}
@@ -191,11 +237,14 @@ function renderActivity(){
   return `<div class="activity-entry"><span class="activity-symbol" aria-hidden="true">${x.category==='quest'?'◈':x.category==='craft'?'▣':'↔'}</span><div><strong>${esc(activityName(x))}</strong><p>By ${esc(author)}</p></div><time class="activity-time">${esc(time)}</time></div>`;
  }).join('')||'<p class="muted">No activity yet.</p>';
 }
+window.unturnovToast=toast;
 function boot(){
  const navigation=$('mainNav');if(navigation)navigation.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)go(b.dataset.view)});
  $all('[data-go-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goView)));
  $('activityScope')?.addEventListener('change',e=>{activityFilter=e.target.value;renderActivity()});
  $('itemImageUpload')?.addEventListener('click',()=>void sendIcon());
+ $('iconBulkUpload')?.addEventListener('click',()=>void sendBulkIcons());
+ $('itemImageCancel')?.addEventListener('click',()=>$('itemImageDialog')?.close());
  document.addEventListener('click',e=>{const b=e.target.closest('[data-icon-item]');if(b)openUpload(b.dataset.iconItem)});
  $('itemImageDialog')?.addEventListener('click',e=>{if(e.target===$('itemImageDialog'))$('itemImageDialog').close()});
  // Distinguish the sign-in view from synchronized private data at first paint.
