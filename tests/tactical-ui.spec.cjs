@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const url='https://vengeance-bro.github.io/unturnov-quest-tracker/preview-tactical.html';
+const url='https://vengeance-bro.github.io/unturnov-quest-tracker/';
 test('private sign-in gate keeps the dashboard hidden',async({page})=>{
  await page.goto(url);
  await expect(page.locator('#authGate')).toBeVisible();
