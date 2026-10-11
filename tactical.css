@@ -1,0 +1,144 @@
+/* UNTURNOV // Tactical Operations dashboard — preview redesign */
+:root{--t-bg:#0a1118;--t-surface:#121f2b;--t-surface2:#192a38;--t-border:#314659;--t-accent:#e4ad64;--t-green:#72c4a0;--t-red:#e6a1a0;--t-text:#edf2f4;--t-muted:#9eb2c3;--t-radius:12px;color-scheme:dark;background:var(--t-bg)}
+body{background:radial-gradient(ellipse at 70% -5%,#21354544,transparent 45%),#0a1118;color:var(--t-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.008em}
+header{background:#0d1721ed;border-bottom:1px solid var(--t-border);padding:16px clamp(16px,3vw,46px) 12px}
+#siteHeader .brandline{display:flex;align-items:center;gap:14px;min-width:0}
+#siteHeader .brandmark{display:grid;place-items:center;background:#d2a16420;border:1px solid #bd946a;color:var(--t-accent);border-radius:11px;width:48px;height:48px;font-size:25px}
+#siteHeader h1{font-size:22px;letter-spacing:.11em;margin:0;text-transform:uppercase;font-weight:800}
+#siteHeader .brandline p{margin:3px 0 0;font-size:12px;color:var(--t-muted)}
+#siteHeader .brandline .edition{font-size:10px;letter-spacing:.16em;color:#c39e74;font-weight:700}
+#siteHeader .topline{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+#siteHeader .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#siteHeader .account-pill{font-size:12px;display:flex;align-items:center;gap:7px;padding:7px 11px;background:#1b2a37;border:1px solid #355065;border-radius:999px}
+#siteHeader .account-pill:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--t-green)}
+#mainNav{display:flex;gap:5px;overflow-x:auto;padding:14px 0 6px;margin-top:4px;scrollbar-width:thin;border-bottom:1px solid #2c3e4d}
+#mainNav button{white-space:nowrap;border:0;background:transparent;color:#a9bece;padding:10px 15px;border-radius:7px;font-size:13px;font-weight:650;min-height:42px}
+#mainNav button:hover{background:#243849;color:#fff}
+#mainNav button.active{background:#dfa95f1c;color:#ffd49b;box-shadow:inset 0 -2px var(--t-accent)}
+#siteHeader .cloud-row{border:0;border-radius:0;background:none;gap:8px;padding:9px 0 0;font-size:12px}
+#siteHeader .cloud-row button{padding:6px 11px;font-size:12px}
+#siteHeader>.airdrop-link{display:none}
+main{max-width:1460px;padding:0 22px;margin:22px auto;gap:19px}
+main>.sidebar{min-width:0}
+main>div{min-width:0}
+.panel{background:linear-gradient(155deg,#152431,#101b26);border:1px solid #2b4050;border-radius:var(--t-radius);padding:20px;margin-bottom:18px;box-shadow:0 9px 26px #050a1138}
+.panel h2{font-size:19px;font-weight:760;letter-spacing:.02em}
+.panel h3{font-size:14px;letter-spacing:.055em;text-transform:uppercase;color:#d9e5ed}
+.panel p,.muted{color:var(--t-muted)}
+#siteHeader button,.panel button{transition:background-color .15s,border-color .15s,transform .15s}
+button{border-radius:8px;background:#1c2d3b;border-color:#3d576a}
+button.primary{background:#bd8745;border-color:#daaa69;color:#111820;font-weight:750}
+button.primary:hover{background:#efb971}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid #e3b47b;outline-offset:3px}
+input,textarea,select{background:#0d1822;border-color:#344d60;color:#f5f7f8}
+table{font-size:13px}
+th{background:#1d3040;color:#c9d8e4;font-size:11px;letter-spacing:.06em;text-transform:uppercase;position:sticky;top:0;z-index:1}
+td{border-bottom:1px solid #2b4152}
+tr:hover td{background:#ffffff06}
+#tabs button{font-size:13px;padding:11px 10px}
+#tabs button.active{background:#bd8745;border-color:#e9be84;color:#111923}
+#questList{max-height:66vh}
+.quest-row{background:#152535;padding:11px;border-radius:8px}
+.quest-row.active{background:#2e4051;border-color:#d4a365}
+.notice{background:#182d3d;border:1px solid #304d5b}
+.airdrop-recipe{background:#112434;border:1px solid #385568}
+.airdrop-metric{background:#142a39}
+#sellSection .sell-results{max-height:610px}
+#sellSection .sell-results table{min-width:900px}
+.sell-decision-select{background:#172b3b}
+#dashboardView{display:none}
+.dashboard-kicker{color:#e0ac71;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;margin:0 0 8px}
+.dashboard-lead{font-size:25px;line-height:1.25;font-weight:780;margin:0 0 6px;letter-spacing:.006em;color:#f7f5f1}
+.dashboard-intro{margin-bottom:20px!important}
+.dashboard-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}
+.dashboard-stat{background:#142432;border:1px solid #334b5e;border-radius:11px;padding:18px;min-width:0}
+.dashboard-stat .stat-label{display:block;color:#a9bfd0;font-size:11px;letter-spacing:.065em;text-transform:uppercase}
+.dashboard-stat .stat-number{display:block;font-size:29px;color:#f6f0e6;font-weight:800;line-height:1.4;font-variant-numeric:tabular-nums}
+.dashboard-stat .stat-sub{color:#91a9b9;font-size:12px}
+.dashboard-players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dashboard-player{padding:16px;background:#142433;border:1px solid #35485c;border-radius:10px;min-width:0}
+.dashboard-player h3{font-size:17px;color:#f1f4f4;margin:0}
+.dashboard-player .row{margin-bottom:10px}
+.player-progress{height:9px;border-radius:10px;background:#304557;overflow:hidden}
+.player-progress span{height:100%;display:block;background:linear-gradient(90deg,#a47b49,#e8b978);border-radius:10px}
+.dashboard-player .player-meta{margin:8px 0 0;font-size:12px;color:#acbecc}
+.dashboard-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:15px}
+.dashboard-shortcuts button{display:flex;gap:8px;align-items:center;justify-content:center;min-height:50px}
+.view-section-caption{color:var(--t-muted);font-size:12px;margin:8px 0 14px}
+#activitySection{display:none}
+.activity-entry{display:flex;gap:12px;align-items:flex-start;padding:13px 4px;border-bottom:1px solid #2c4052}
+.activity-entry:last-child{border-bottom:0}
+.activity-entry .activity-time{font-size:12px;color:#8fabbd;white-space:nowrap;margin-left:auto}
+.activity-entry .activity-symbol{border:1px solid #4a5b69;border-radius:7px;padding:7px;color:#e2b17a;background:#233646}
+.activity-entry strong{font-size:13px}
+.activity-entry p{font-size:12px;margin:4px 0}
+#activityScope{max-width:200px}
+#accountPanel{scroll-margin-top:12px}
+#settingsLead{display:none}
+#authGate{display:none;padding:16px}
+#authGate .auth-gate-card{max-width:520px;margin:8vh auto;background:#142432;border:1px solid #40596c;border-radius:16px;padding:28px;text-align:center}
+#authGate h2{color:#f2dec2;font-size:22px}
+#authGate p{color:#bacbd8}
+#authGate button{width:100%;max-width:310px}
+.image-cell{display:flex;align-items:center;gap:11px;min-width:140px}
+.item-thumb{width:43px;height:43px;flex:0 0 43px;object-fit:contain;border:1px solid #3d5467;background:#102130;border-radius:8px;padding:3px}
+.item-thumb.fallback{display:grid;place-items:center;color:#c6ad83;font-size:20px;background:#27384a}
+.item-thumb .item-symbol{font-size:20px}
+.item-name{font-weight:650;overflow-wrap:anywhere}
+.item-photo-link{font-size:11px;text-decoration:underline;color:#dbb77e;background:none!important;border:0!important;padding:0!important;white-space:nowrap}
+.item-quickpic{display:flex;align-items:center;gap:12px;margin-top:10px}
+.image-edit-panel{border-top:1px solid #334a5e;padding:12px 0}
+.image-edit-panel input{width:min(480px,100%)}
+.image-edit-panel .actions{align-items:center}
+body[data-view]{--active-view:1}
+body[data-view] #questDetail,body[data-view] #teamSection,body[data-view] #sellSection,body[data-view] #airdropSection,body[data-view] #dashboardView,body[data-view] #activitySection,body[data-view] .personal-loot-panel,body[data-view] #saveProtection{display:none!important}
+body[data-view]:not([data-view="quests"]) main{grid-template-columns:minmax(0,1fr)}
+body[data-view]:not([data-view="quests"]):not([data-view="settings"]) main>.sidebar{display:none}
+body[data-view="quests"] #questDetail{display:block!important}
+body[data-view="quests"] .personal-loot-panel:not([hidden]){display:block!important}
+body[data-view="team"] #teamSection{display:block!important}
+body[data-view="sell"] #sellSection{display:block!important}
+body[data-view="airdrop"] #airdropSection{display:block!important}
+body[data-view="dashboard"] #dashboardView{display:block!important}
+body[data-view="activity"] #activitySection{display:block!important}
+body[data-view="settings"] #settingsLead,body[data-view="settings"] #saveProtection{display:block!important}
+body[data-view="settings"] main>.sidebar{display:block;grid-column:1}
+body[data-view="settings"] #questSidebarPanel{display:none}
+body[data-view="quests"] #accountPanel{display:none}
+body[data-view]:not([data-view="settings"]):not([data-view="quests"]) #accountPanel{display:none}
+body:not([data-view="quests"]):not([data-view="settings"]) .sidebar{display:none}
+body[data-view="settings"] main>div{display:none}
+body.auth-locked main,body.auth-locked #mainNav,body.auth-locked #siteHeader .cloud-row,body.auth-locked #siteHeader .top-actions{display:none!important}
+body.auth-locked #authGate{display:block}
+@media(max-width:1100px){.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:740px){
+ header{padding:13px 13px 10px}
+ #siteHeader h1{font-size:17px}
+ #siteHeader .brandmark{height:41px;width:41px}
+ #siteHeader .top-actions{display:none}
+ #mainNav button{font-size:12px;padding:8px 12px;min-height:40px}
+ main{padding:0 12px;margin:13px auto}
+ .panel{padding:14px}
+ .dashboard-lead{font-size:22px}
+ .dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .dashboard-stat{padding:12px}
+ .dashboard-stat .stat-number{font-size:24px}
+ .dashboard-players{grid-template-columns:1fr}
+ .dashboard-shortcuts{grid-template-columns:1fr}
+ body[data-view="quests"] main{display:block}
+ #questSidebarPanel{margin-bottom:12px}
+ #questList{max-height:230px}
+ .mobile-cards thead{display:none}
+ .mobile-cards,.mobile-cards tbody,.mobile-cards tr,.mobile-cards td{display:block;width:100%}
+ .mobile-cards tr{border:1px solid #35495b;margin:10px 0;padding:10px;border-radius:9px;background:#172939}
+ .mobile-cards td{display:flex;justify-content:space-between;align-items:flex-start;gap:9px;border:0;padding:6px 2px!important;text-align:right!important;white-space:normal}
+ .mobile-cards td:before{content:attr(data-label);flex-shrink:0;font-size:11px;color:#a8bbcb;text-align:left}
+ .mobile-cards td:first-child{text-align:left!important}
+ .mobile-cards td:last-child{display:block;text-align:left!important}
+ .mobile-cards td:last-child:before{display:block;margin-bottom:4px}
+ #sellSection .sell-results{max-height:none;border:0;overflow:visible}
+ #sellSection .sell-results table{min-width:0}
+ #sellSection .sell-results td:nth-child(4){min-width:0}
+ .item-thumb{width:37px;height:37px;flex-basis:37px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
